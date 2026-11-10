@@ -23,13 +23,14 @@ from typing import Optional
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Static
+from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Select, Static
 from rich.text import Text
 
 from .explanations import METRIC_EXPLANATIONS
 from .runner import DEFAULT_RUNNER, PROJECT_ROOT, RunOutcome, RunnerError, run_runner
 from .schema import RunnerResult
 from .statistics import summarize
+from .demos import CHOICES as DEMO_CHOICES, command as demo_command
 
 STDOUT_PREVIEW = 4000  # сколько символов вывода программы показываем в TUI
 
@@ -61,6 +62,7 @@ class LatencyLabApp(App):
     CSS = """
     #controls { height: auto; padding: 1 2; }
     #controls Input { margin-bottom: 1; }
+    #demo-select { margin-bottom: 1; }
     #row { height: auto; }
     #cpu-label { width: 5; height: 3; content-align: center middle; }
     #cpu { width: 15; margin-right: 1; }
@@ -85,7 +87,7 @@ class LatencyLabApp(App):
         self,
         runner_path: Optional[str] = None,
         results_dir: Path = Path("results"),
-        demo: bool = False,
+        demo: bool | str = False,
         runner_timeout: Optional[float] = 10,
         sample: int = 5,
     ) -> None:
@@ -93,6 +95,7 @@ class LatencyLabApp(App):
         self.runner_path = runner_path or os.environ.get("LATENCYLAB_RUNNER") or DEFAULT_RUNNER
         self.results_dir = results_dir
         self.demo = demo
+        self.demo_name = "legacy" if demo is True else (demo or "custom")
         self.runner_timeout = runner_timeout
         self.sample = sample
         self.demo_command = shlex.join([str(PROJECT_ROOT / "build" / "demo_target")])
@@ -110,6 +113,7 @@ class LatencyLabApp(App):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         with Container(id="controls"):
+            yield Select(DEMO_CHOICES, value=self.demo_name, allow_blank=False, id="demo-select")
             yield Label("Команда для запуска", classes="section-title")
             yield Input(placeholder="python demo.py --size 1024", id="command")
             with Horizontal(id="row"):
@@ -136,9 +140,20 @@ class LatencyLabApp(App):
         table = self.query_one("#metrics", DataTable)
         table.add_columns("Метрика", "Среднее", "Мин", "Макс", "n", "Пояснение")
         if self.demo:
-            self.query_one("#command", Input).value = self.demo_command
+            self._apply_demo(self.demo_name)
 
     # --- события --------------------------------------------------------------
+
+    def _apply_demo(self, name: str) -> None:
+        if name == "custom":
+            return
+        command = self.demo_command if name == "legacy" else demo_command(name, PROJECT_ROOT / "build")
+        self.query_one("#command", Input).value = command
+
+    @on(Select.Changed, "#demo-select")
+    def _demo_changed(self, event: Select.Changed) -> None:
+        if not self._busy and isinstance(event.value, str):
+            self._apply_demo(event.value)
 
     @on(Input.Submitted, "#command")
     def _submit_command(self, event: Input.Submitted) -> None:
@@ -155,6 +170,7 @@ class LatencyLabApp(App):
         self.query_one("#command", Input).value = ""
         self.query_one("#cpu", Input).value = ""
         self.query_one("#sample", Input).value = str(self.sample)
+        self.query_one("#demo-select", Select).value = "custom"
         self._clear_results()
         self._set_status("Готов к работе.")
 
@@ -170,7 +186,7 @@ class LatencyLabApp(App):
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
-        for selector in ("#command", "#cpu", "#sample", "#run", "#clear"):
+        for selector in ("#demo-select", "#command", "#cpu", "#sample", "#run", "#clear"):
             self.query_one(selector).disabled = busy
         self.query_one("#stop", Button).disabled = not busy
 

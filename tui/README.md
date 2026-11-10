@@ -17,6 +17,18 @@ python3 -m tui --demo --sample 5
 
 При обычной Linux-сборке `--demo` подставляет `build/demo_target`. В поле команды можно указать свой бинарник с аргументами, например `./my_program "argument with spaces"`.
 
+Готовые демо можно выбрать в списке над командой или при старте:
+
+```bash
+python3 -m tui --demo array-sequential
+python3 -m tui --demo array-strided
+python3 -m tui --demo binary-search
+python3 -m tui --demo matrix-rows
+python3 -m tui --demo matrix-columns
+```
+
+Размеры и число проходов редактируются в поле команды. [Описание и параметры демо](../docs/demos.md).
+
 По умолчанию используется `build/runner` относительно корня проекта. Для другой сборки:
 
 ```bash
@@ -29,6 +41,7 @@ python3 -m tui --runner ./build-debug/runner
 
 | Поле | Значение |
 | --- | --- |
+| Список демо | Заполняет команду; «Свой бинарник» позволяет вводить свою |
 | Команда | Бинарник с аргументами; кавычки поддерживаются |
 | CPU | Один логический CPU; пусто — первый разрешённый |
 | sample | Число отдельных последовательных запусков, 1–1000 |

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .app import LatencyLabApp
 from .runner import DEFAULT_RUNNER
+from .demos import DEMO_NAMES
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -18,7 +19,10 @@ def main(argv: list[str] | None = None) -> int:
         help="путь/команда runner'а (по умолчанию $LATENCYLAB_RUNNER или build/runner)",
     )
     parser.add_argument("--results-dir", default="results", help="куда сохранять JSON результатов")
-    parser.add_argument("--demo", action="store_true", help="подставить демо-команду в поле ввода")
+    parser.add_argument(
+        "--demo", nargs="?", const="legacy", default=False, choices=DEMO_NAMES,
+        help="выбрать демо: array-sequential, array-strided, binary-search, matrix-rows, matrix-columns; без имени — прежнее демо",
+    )
     parser.add_argument("--sample", type=int, default=5, help="число запусков программы (1..1000)")
     parser.add_argument(
         "--timeout",

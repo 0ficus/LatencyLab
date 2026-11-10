@@ -8,12 +8,13 @@ import sys
 import tempfile
 import unittest
 
-from textual.widgets import Button, DataTable, Input, Static
+from textual.widgets import Button, DataTable, Input, Select, Static
 
 from tui.app import LatencyLabApp
 from tui.runner import RunOutcome
 from tui.schema import ResultParseError, parse_result
 from tui.statistics import summarize
+from tui.demos import PRESETS
 
 RUNNER = Path(os.environ.get("LATENCYLAB_TEST_RUNNER", "build/runner")).resolve()
 
@@ -160,6 +161,34 @@ class RealTUITests(unittest.IsolatedAsyncioTestCase):
             await self.wait_done(app)
             self.assertEqual(len(app.outcomes), 1)
             self.assertEqual(app.outcomes[0].result.status, "ok")
+
+    async def test_builtin_presets_launch_real_executables(self):
+        app = LatencyLabApp(runner_path=str(RUNNER), results_dir=self.directory, sample=1)
+        async with app.run_test(size=(140, 46)) as pilot:
+            for name in PRESETS:
+                with self.subTest(preset=name):
+                    app.query_one("#demo-select", Select).value = name
+                    await pilot.pause()
+                    command = app.query_one("#command", Input).value
+                    self.assertIn("demo_", command)
+                    self.assertEqual(app.query_one("#sample", Input).value, "1")
+                    await pilot.click("#run")
+                    await self.wait_done(app)
+                    self.assertEqual(len(app.outcomes), 1)
+                    self.assertEqual(app.outcomes[0].result.status, "ok")
+                    self.assertIn("checksum=", app.outcomes[0].result.stdout)
+
+    async def test_keyboard_demo_selection_on_small_terminal(self):
+        app = LatencyLabApp(runner_path=str(RUNNER), results_dir=self.directory, sample=1)
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.click("#demo-select")
+            await pilot.press("end", "enter")
+            self.assertEqual(app.query_one("#demo-select", Select).value, "matrix-columns")
+            self.assertTrue(app.query_one("#command", Input).value.endswith("256 3 columns"))
+            await pilot.click("#run")
+            await self.wait_done(app)
+            self.assertEqual(app.outcomes[0].result.status, "ok")
+            self.assertIn("order=ijk", app.outcomes[0].result.stdout)
 
 
 if __name__ == "__main__":

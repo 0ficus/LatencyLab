@@ -19,6 +19,16 @@ python3 -m tui --demo
 
 В TUI отображаются среднее/min/max по успешным запускам, stdout/stderr последнего запуска и пояснения к метрикам. Кнопка «Стоп» завершает текущий процесс и серию. Исходные данные сохраняются в `results/run-*.json`, сводка — в `results/series-*.json`.
 
+В списке над командой доступны готовые демо: массив подряд и с большим шагом, бинарный поиск, умножение матриц по строкам и столбцам. Выбор заполняет команду, параметры можно редактировать.
+
+```bash
+python3 -m tui --demo array-sequential
+python3 -m tui --demo binary-search
+python3 -m tui --demo matrix-columns
+```
+
+Все команды и параметры: [готовые демо](docs/demos.md).
+
 ## C++ runner отдельно
 
 ```bash
@@ -39,7 +49,9 @@ src/runner/capture.cpp    захват stdout/stderr
 src/runner/json.cpp       сериализация результата
 src/runner/posix.hpp      RAII для pipe и дочернего процесса
 src/metrics.cpp           существующий модуль сбора метрик
+src/demos/               массив, бинарный поиск, умножение матриц
 tui/runner.py             вызов C++ через subprocess
+tui/demos.py              готовые команды для списка демо
 tui/statistics.py         среднее/min/max по sample
 tui/app.py                Textual TUI
 ```
@@ -51,6 +63,6 @@ ctest --test-dir build --output-on-failure
 python3 -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-CTest проверяет библиотеку метрик и Linux runner. Python-тесты проверяют статистику и реальный TUI через Textual Pilot: число запусков, остановку, закрытие приложения и обработку ошибок. Тест аппаратных cycles пропускается, если PMU недоступен.
+CTest проверяет библиотеку метрик, Linux runner и корректность вычислений демо. Python-тесты проверяют статистику и реальный TUI через Textual Pilot: число запусков, выбор демо, остановку, закрытие приложения и обработку ошибок. Тест аппаратных cycles пропускается, если PMU недоступен.
 
 Подробнее: [TUI](tui/README.md), [интеграция MetricsCollector](docs/integration.md).
