@@ -7,6 +7,7 @@ TUI общается с C++ runner'ом через один JSON-объект, �
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any, Optional
 
 SCHEMA_VERSION = 1
@@ -52,6 +53,8 @@ class RunnerResult:
     exit_code: int
     elapsed_ns: int
     metrics: dict[str, Metric]
+    status: str = "ok"
+    error: Optional[str] = None
     cpu: Optional[int] = None
     kernel: Optional[str] = None
     perf_event_paranoid: Optional[str] = None
@@ -92,11 +95,16 @@ def parse_metric(name: str, raw: Any) -> Metric:
     status = raw.get("status", "unavailable")
     if not isinstance(status, str):
         status = "unavailable"
+    value = raw.get("value")
+    if status == "available" and (
+        isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0
+    ):
+        raise ResultParseError(f"метрика {name!r} объявлена доступной, но не содержит конечного неотрицательного числа")
     return Metric(
         name=name,
         status=status,
         unit=str(raw.get("unit", "") or ""),
-        value=raw.get("value"),
+        value=value if status == "available" else None,
         raw_value=raw.get("raw_value"),
         time_enabled_ns=_int("time_enabled_ns"),
         time_running_ns=_int("time_running_ns"),
@@ -134,12 +142,12 @@ def parse_result(data: Any) -> RunnerResult:
         raise ResultParseError("stdout runner'а должен быть JSON-объектом")
 
     schema_version = data.get("schema_version")
-    if not isinstance(schema_version, int):
-        raise ResultParseError("поле 'schema_version' должно быть целым числом")
+    if type(schema_version) is not int or schema_version != SCHEMA_VERSION:
+        raise ResultParseError("неподдерживаемая версия schema_version")
 
     def _req_int(key: str) -> int:
         value = data.get(key)
-        if not isinstance(value, (int, float)) or isinstance(value, bool):
+        if type(value) is not int:
             raise ResultParseError(f"поле {key!r} должно быть целым числом")
         return int(value)
 
@@ -166,6 +174,8 @@ def parse_result(data: Any) -> RunnerResult:
         exit_code=_req_int("exit_code"),
         elapsed_ns=_req_int("elapsed_ns"),
         metrics=metrics,
+        status=str(data.get("status", "ok" if data.get("exit_code") == 0 else "target_error")),
+        error=data.get("error"),
         cpu=int(cpu) if isinstance(cpu, (int, float)) and not isinstance(cpu, bool) else None,
         kernel=data.get("kernel"),
         perf_event_paranoid=data.get("perf_event_paranoid"),

@@ -4,9 +4,9 @@
 Реализует тот же CLI + JSON-контракт, что и настоящий runner, чтобы TUI можно
 было разрабатывать и показывать end-to-end без C++ бинарника::
 
-    runner --command CMD [--cpu N] [--mock-metrics]
+    runner [--cpu N] [--mock-metrics] -- program [args...]
 
-- Реально запускает ``CMD`` в шелле и честно замеряет wall-time и CPU-time.
+- Реально запускает программу без shell и замеряет wall-time и CPU-time.
 - Захватывает stdout/stderr программы внутрь JSON (обрезаются до 64 КиБ).
 - Метрики по умолчанию ``unavailable`` (честно — здесь нет perf_event_open),
   а с флагом ``--mock-metrics`` подставляются явно помеченные синтетические
@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import resource
+import shlex
 import subprocess
 import sys
 import time
@@ -87,13 +88,22 @@ def _synthetic_metrics(elapsed_ns: int) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="mock LatencyLab runner")
-    parser.add_argument("--command", required=True, help="команда в шелле")
+    parser.add_argument("--command", help="команда с аргументами (кавычки поддерживаются, без shell)")
     parser.add_argument("--cpu", type=int, default=None, help="CPU (принимается, в моке игнорируется)")
     parser.add_argument("--mock-metrics", action="store_true", help="подставить синтетические метрики")
+    parser.add_argument("--timeout-ms", type=int, default=10000)
+    parser.add_argument("argv", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
+    target = args.argv[1:] if args.argv[:1] == ["--"] else args.argv
+    if args.command:
+        if target:
+            parser.error("задайте --command или argv после --, а не оба")
+        target = shlex.split(args.command)
+    if not target:
+        parser.error("задайте бинарник и аргументы после --")
 
     start = time.monotonic()
-    proc = subprocess.run(args.command, shell=True, capture_output=True, text=True)
+    proc = subprocess.run(target, capture_output=True, text=True, timeout=args.timeout_ms / 1000)
     finish = time.monotonic()
     elapsed_ns = int((finish - start) * 1_000_000_000)
 
@@ -104,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     result = {
         "schema_version": SCHEMA_VERSION,
         "mock": bool(args.mock_metrics),
-        "command": args.command,
+        "command": args.command or shlex.join(target),
         "cpu": args.cpu,
         "exit_code": proc.returncode,
         "elapsed_ns": elapsed_ns,

@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 
 from .app import LatencyLabApp
+from .runner import DEFAULT_RUNNER
+from .demos import DEMO_NAMES
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -14,24 +16,31 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--runner",
         default=None,
-        help="путь/команда runner'а (по умолчанию $LATENCYLAB_RUNNER или 'runner')",
+        help="путь/команда runner'а (по умолчанию $LATENCYLAB_RUNNER или build/runner)",
     )
     parser.add_argument("--results-dir", default="results", help="куда сохранять JSON результатов")
-    parser.add_argument("--demo", action="store_true", help="подставить демо-команду в поле ввода")
+    parser.add_argument(
+        "--demo", nargs="?", const="legacy", default=False, choices=DEMO_NAMES,
+        help="выбрать демо: array-sequential, array-strided, binary-search, matrix-rows, matrix-columns; без имени — прежнее демо",
+    )
+    parser.add_argument("--sample", type=int, default=5, help="число запусков программы (1..1000)")
     parser.add_argument(
         "--timeout",
         type=float,
-        default=None,
-        help="максимальное время одного запуска в секундах (по умолчанию без ограничения)",
+        default=10,
+        help="максимальное время одного запуска в секундах (по умолчанию 10)",
     )
     args = parser.parse_args(argv)
+    if not 1 <= args.sample <= 1000:
+        parser.error("--sample должен быть от 1 до 1000")
 
-    runner = args.runner or os.environ.get("LATENCYLAB_RUNNER") or "runner"
+    runner = args.runner or os.environ.get("LATENCYLAB_RUNNER") or DEFAULT_RUNNER
     app = LatencyLabApp(
         runner_path=runner,
         results_dir=Path(args.results_dir),
         demo=args.demo,
         runner_timeout=args.timeout,
+        sample=args.sample,
     )
     app.run()
     return 0

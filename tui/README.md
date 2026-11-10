@@ -1,87 +1,95 @@
-# Latency Lab — TUI
+# Latency Lab TUI
 
-Python TUI (Textual) + прослойка до C++ runner'а. TUI сам программу не запускает —
-он вызывает runner, который запускает целевую программу, собирает метрики и печатает
-JSON; TUI этот JSON показывает и сохраняет в `results/`.
+Textual TUI вызывает настоящий C++ runner через `subprocess`, получает JSON с метриками и сохраняет результат.
 
-## Установка
+## Установка и запуск на Linux
+
+Из корня репозитория:
 
 ```bash
+python3 -m venv .venv
+. .venv/bin/activate
 pip install -r requirements.txt
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j 2
+python3 -m tui --demo --sample 5
 ```
 
-## Запуск
+При обычной Linux-сборке `--demo` подставляет `build/demo_target`. В поле команды можно указать свой бинарник с аргументами, например `./my_program "argument with spaces"`.
 
-С настоящим C++ runner'ом (бинарник `runner` в PATH):
+Готовые демо можно выбрать в списке над командой или при старте:
 
 ```bash
-python3 -m tui
+python3 -m tui --demo array-sequential
+python3 -m tui --demo array-strided
+python3 -m tui --demo binary-search
+python3 -m tui --demo matrix-rows
+python3 -m tui --demo matrix-columns
 ```
 
-Пока runner'а нет — с моком (эмуляция того же контракта, метрики синтетические):
+Размеры и число проходов редактируются в поле команды. [Описание и параметры демо](../docs/demos.md).
+
+По умолчанию используется `build/runner` относительно корня проекта. Для другой сборки:
+
+```bash
+python3 -m tui --runner ./build-debug/runner
+```
+
+Можно также задать `LATENCYLAB_RUNNER`. Мок автоматически не выбирается.
+
+## Поля и результат
+
+| Поле | Значение |
+| --- | --- |
+| Список демо | Заполняет команду; «Свой бинарник» позволяет вводить свою |
+| Команда | Бинарник с аргументами; кавычки поддерживаются |
+| CPU | Один логический CPU; пусто — первый разрешённый |
+| sample | Число отдельных последовательных запусков, 1–1000 |
+
+Все запуски серии используют один и тот же фактический CPU. Python TUI не пинится. Во время выполнения поля заблокированы, а статус показывает номер запуска. Кнопка «Стоп» завершает текущую программу и останавливает серию. Закрытие приложения также останавливает измерение.
+
+Таблица показывает среднее, минимум, максимум и число доступных измерений `n` для wall time и четырёх событий `MetricsCollector`: cycles, instructions, cache misses и task-clock. Ошибочные запуски не участвуют в среднем. Недоступная метрика отображается как «—», а не как ноль. Вывод и resource counters показаны для последнего запуска.
+
+По умолчанию один запуск ограничен 10 секундами. Можно изменить:
+
+```bash
+python3 -m tui --timeout 30 --sample 3
+```
+
+Сохраняются:
+
+- `results/run-*.json` — исходный JSON каждого запуска;
+- `results/series-*.json` — команда, запрошенный sample, завершённые запуски, статистика и исходные результаты серии.
+
+## Контракт с runner
+
+```text
+runner [--cpu N] [--timeout-ms N] -- program [args...]
+```
+
+Python разбирает строку через `shlex.split` и передаёт аргументы непосредственно в `execvp`, без shell. `|`, `>`, `&&` и `$()` не исполняются оболочкой. Для измерения простого бинарника это исключает лишний shell-процесс.
+
+Runner печатает в stdout один JSON v1. Вывод цели находится в полях `stdout` и `stderr`, до 64 KiB на каждое, с признаками обрезки. Поля `metrics` совпадают с `metrics_json` из библиотеки Егора. `scope` явно указывает, что аппаратные события относятся к главному потоку цели в пользовательском режиме, включая запуск и загрузчик.
+
+Если `perf_event_open` запрещён, runner всё равно возвращает настоящее время и ресурсы `wait4`. Аппаратные события остаются `unavailable` с причиной. Подробности: [контракт интеграции](../docs/integration.md).
+
+## Мок для просмотра интерфейса
+
+Для macOS или разработки интерфейса без Linux можно явно выбрать мок:
 
 ```bash
 python3 -m tui --runner "python3 tui/mock_runner.py --mock-metrics" --demo
 ```
 
-Флаг `--demo` подставляет демо-команду в поле ввода, а `--mock-metrics`
-заставляет мок подставить явно помеченные синтетические метрики (без него мок
-честно показывает всё как «недоступно»). Путь к runner'у также можно задать
-переменной окружения `LATENCYLAB_RUNNER`, например
-`LATENCYLAB_RUNNER="python3 tui/mock_runner.py --mock-metrics"`.
+Только флаг `--mock-metrics` включает синтетические аппаратные данные, которые отмечаются в UI. Без него мок запускает программу, но возвращает аппаратные метрики как недоступные. В моке CPU принимается для совместимости, но affinity не применяется.
 
-Внутри TUI: введите команду → «Запустить» (или Enter). Статус сменится на
-«Выполняется…», затем появится сводка, таблица метрик и вывод программы.
-Результат каждого запуска сохраняется в `results/run-*.json`.
+Если собранного Linux-демо нет, `--demo` подставляет короткую Python-команду для просмотра интерфейса. Это не переключает настоящий runner на мок.
 
-## Контракт runner'а
+## Тесты
 
-TUI вызывает runner так:
-
-```text
-runner --command "CMD" [--cpu N]
+```bash
+ctest --test-dir build --output-on-failure
+python3 -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-Runner выполняет `CMD` в шелле и печатает в stdout **ровно один JSON-объект**
-(ничего больше; вывод самой программы передаётся внутри JSON, а не вперемешку):
-
-```json
-{
-  "schema_version": 1,
-  "mock": false,
-  "command": "python demo.py",
-  "cpu": 0,
-  "exit_code": 0,
-  "elapsed_ns": 123456789,
-  "kernel": "6.8.0-138-generic",
-  "perf_event_paranoid": "4",
-  "resources": {
-    "source": "getrusage(RUSAGE_CHILDREN)",
-    "user_cpu_us": 1234,
-    "system_cpu_us": 56,
-    "minor_page_faults": 0,
-    "major_page_faults": 0
-  },
-  "metrics": {
-    "cycles": {
-      "status": "available",
-      "unit": "count",
-      "value": 12345.0,
-      "raw_value": 12345,
-      "time_enabled_ns": 1000,
-      "time_running_ns": 900,
-      "errno": 0,
-      "reason": null
-    }
-  },
-  "stdout": "вывод программы",
-  "stderr": "",
-  "stdout_truncated": false,
-  "stderr_truncated": false
-}
-```
-
-Поля `metrics` совпадают с форматом Егора (`metrics_json` из `docs/integration.md`).
-Поля, помеченные `mock`/`mock-metrics`, — синтетика только для предпросмотра UI.
-
-См. также: `schema.py` (модель и валидация), `runner.py` (вызов и разбор).
+Для TUI-тестов с runner из другой директории задайте `LATENCYLAB_TEST_RUNNER=/absolute/path/to/runner`.

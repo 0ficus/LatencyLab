@@ -10,6 +10,23 @@ target_compile_options(latency_metrics PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(metrics_probe src/probe.cpp)
 target_link_libraries(metrics_probe PRIVATE latency_metrics)
 target_compile_options(metrics_probe PRIVATE -Wall -Wextra -Wpedantic)
+add_executable(runner
+  src/runner.cpp
+  src/runner/options.cpp
+  src/runner/capture.cpp
+  src/runner/process.cpp
+  src/runner/json.cpp
+)
+target_link_libraries(runner PRIVATE latency_metrics)
+target_compile_options(runner PRIVATE -Wall -Wextra -Wpedantic)
+add_executable(demo_target src/demo_target.cpp)
+target_compile_features(demo_target PRIVATE cxx_std_17)
+target_compile_options(demo_target PRIVATE -Wall -Wextra -Wpedantic)
+foreach(demo IN ITEMS array binary_search matrix)
+  add_executable(demo_${demo} src/demos/${demo}.cpp)
+  target_compile_features(demo_${demo} PRIVATE cxx_std_17)
+  target_compile_options(demo_${demo} PRIVATE -Wall -Wextra -Wpedantic)
+endforeach()
 include(CTest)
 if(BUILD_TESTING)
   add_executable(collector_lifecycle tests/collector_lifecycle.cpp)
@@ -17,4 +34,8 @@ if(BUILD_TESTING)
   add_test(NAME collector_lifecycle COMMAND collector_lifecycle)
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
   add_test(NAME probe_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/probe_contract.py $<TARGET_FILE:metrics_probe>)
+  add_test(NAME runner_integration COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/runner_integration.py $<TARGET_FILE:runner>)
+  set_tests_properties(runner_integration PROPERTIES TIMEOUT 40)
+  add_test(NAME demos_correctness COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/demos_correctness.py $<TARGET_FILE:demo_array> $<TARGET_FILE:demo_binary_search> $<TARGET_FILE:demo_matrix>)
+  set_tests_properties(demos_correctness PROPERTIES TIMEOUT 30)
 endif()
