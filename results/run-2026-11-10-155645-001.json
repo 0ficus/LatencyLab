@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "mock": false,
+  "command": "python3 -c \"print(sum(i*i for i in range(2000000)))\"",
+  "cpu": null,
+  "exit_code": 0,
+  "elapsed_ns": 118220915,
+  "kernel": null,
+  "perf_event_paranoid": null,
+  "resources": {
+    "source": "getrusage(RUSAGE_CHILDREN)",
+    "user_cpu_us": 101715,
+    "system_cpu_us": 8709,
+    "minor_page_faults": 1755,
+    "major_page_faults": 22
+  },
+  "metrics": {
+    "cycles": {
+      "status": "unavailable",
+      "unit": "count",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 0,
+      "reason": "mock runner: perf_event_open недоступен (нет Linux PMU)"
+    },
+    "instructions": {
+      "status": "unavailable",
+      "unit": "count",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 0,
+      "reason": "mock runner: perf_event_open недоступен (нет Linux PMU)"
+    },
+    "cache_misses": {
+      "status": "unavailable",
+      "unit": "count",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 0,
+      "reason": "mock runner: perf_event_open недоступен (нет Linux PMU)"
+    },
+    "task_clock": {
+      "status": "unavailable",
+      "unit": "ns",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 0,
+      "reason": "mock runner: perf_event_open недоступен (нет Linux PMU)"
+    }
+  },
+  "stdout": "2666664666667000000\n",
+  "stderr": "",
+  "stdout_truncated": false,
+  "stderr_truncated": false
+}
