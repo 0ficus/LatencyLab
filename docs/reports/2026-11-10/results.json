@@ -1,0 +1,502 @@
+[
+  {
+    "demo": "array-sequential",
+    "label": "Массив: последовательный обход",
+    "command": "/workspace/build/demo_array 32 8 sequential",
+    "cpu": 0,
+    "sample": 5,
+    "mean_ms": 20.6234762,
+    "min_ms": 19.357873,
+    "max_ms": 25.092848,
+    "stdout": "demo=array mode=sequential size_MB=32 passes=8 checksum=70368760954908",
+    "metrics": {
+      "elapsed_ns": {
+        "unit": "ns",
+        "n": 5,
+        "mean": 20623476.2,
+        "min": 19357873,
+        "max": 25092848
+      },
+      "cycles": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "instructions": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "cache_misses": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "task_clock": {
+        "unit": "ns",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "last_metrics": {
+      "cycles": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "instructions": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "cache_misses": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "task_clock": {
+        "status": "unavailable",
+        "unit": "ns",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      }
+    },
+    "last_resources": {
+      "source": "wait4",
+      "user_cpu_us": 14310,
+      "system_cpu_us": 4738,
+      "minor_page_faults": 8348,
+      "major_page_faults": 1
+    },
+    "svg": "01-array-sequential.svg",
+    "png": "01-array-sequential.png",
+    "summary": "data/array-sequential/series-2026-11-10-211316-d7d8a2.json"
+  },
+  {
+    "demo": "array-strided",
+    "label": "Массив: обход с большим шагом",
+    "command": "/workspace/build/demo_array 32 8 strided",
+    "cpu": 0,
+    "sample": 5,
+    "mean_ms": 84.624878,
+    "min_ms": 78.089323,
+    "max_ms": 89.246816,
+    "stdout": "demo=array mode=strided size_MB=32 passes=8 checksum=70368760954908",
+    "metrics": {
+      "elapsed_ns": {
+        "unit": "ns",
+        "n": 5,
+        "mean": 84624878,
+        "min": 78089323,
+        "max": 89246816
+      },
+      "cycles": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "instructions": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "cache_misses": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "task_clock": {
+        "unit": "ns",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "last_metrics": {
+      "cycles": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "instructions": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "cache_misses": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "task_clock": {
+        "status": "unavailable",
+        "unit": "ns",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      }
+    },
+    "last_resources": {
+      "source": "wait4",
+      "user_cpu_us": 79138,
+      "system_cpu_us": 6888,
+      "minor_page_faults": 8347,
+      "major_page_faults": 1
+    },
+    "svg": "02-array-strided.svg",
+    "png": "02-array-strided.png",
+    "summary": "data/array-strided/series-2026-11-10-211317-fb771d.json"
+  },
+  {
+    "demo": "binary-search",
+    "label": "Бинарный поиск",
+    "command": "/workspace/build/demo_binary_search 1048576 200000",
+    "cpu": 0,
+    "sample": 5,
+    "mean_ms": 39.2033778,
+    "min_ms": 37.135628,
+    "max_ms": 45.731966,
+    "stdout": "demo=binary_search elements=1048576 queries=200000 seed=42 hits=99903 checksum=52447202587",
+    "metrics": {
+      "elapsed_ns": {
+        "unit": "ns",
+        "n": 5,
+        "mean": 39203377.8,
+        "min": 37135628,
+        "max": 45731966
+      },
+      "cycles": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "instructions": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "cache_misses": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "task_clock": {
+        "unit": "ns",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "last_metrics": {
+      "cycles": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "instructions": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "cache_misses": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "task_clock": {
+        "status": "unavailable",
+        "unit": "ns",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      }
+    },
+    "last_resources": {
+      "source": "wait4",
+      "user_cpu_us": 35087,
+      "system_cpu_us": 1927,
+      "minor_page_faults": 1179,
+      "major_page_faults": 1
+    },
+    "svg": "03-binary-search.svg",
+    "png": "03-binary-search.png",
+    "summary": "data/binary-search/series-2026-11-10-211318-6436b3.json"
+  },
+  {
+    "demo": "matrix-rows",
+    "label": "Умножение матриц: по строкам (ikj)",
+    "command": "/workspace/build/demo_matrix 256 3 rows",
+    "cpu": 0,
+    "sample": 5,
+    "mean_ms": 23.5546382,
+    "min_ms": 21.854529,
+    "max_ms": 29.91091,
+    "stdout": "demo=matrix mode=rows order=ikj size=256 passes=3 checksum=3623819127",
+    "metrics": {
+      "elapsed_ns": {
+        "unit": "ns",
+        "n": 5,
+        "mean": 23554638.2,
+        "min": 21854529,
+        "max": 29910910
+      },
+      "cycles": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "instructions": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "cache_misses": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "task_clock": {
+        "unit": "ns",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "last_metrics": {
+      "cycles": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "instructions": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "cache_misses": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "task_clock": {
+        "status": "unavailable",
+        "unit": "ns",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      }
+    },
+    "last_resources": {
+      "source": "wait4",
+      "user_cpu_us": 19628,
+      "system_cpu_us": 1941,
+      "minor_page_faults": 542,
+      "major_page_faults": 1
+    },
+    "svg": "04-matrix-rows.svg",
+    "png": "04-matrix-rows.png",
+    "summary": "data/matrix-rows/series-2026-11-10-211318-160995.json"
+  },
+  {
+    "demo": "matrix-columns",
+    "label": "Умножение матриц: по столбцам (ijk)",
+    "command": "/workspace/build/demo_matrix 256 3 columns",
+    "cpu": 0,
+    "sample": 5,
+    "mean_ms": 40.6215468,
+    "min_ms": 39.517785,
+    "max_ms": 44.637054,
+    "stdout": "demo=matrix mode=columns order=ijk size=256 passes=3 checksum=3623819127",
+    "metrics": {
+      "elapsed_ns": {
+        "unit": "ns",
+        "n": 5,
+        "mean": 40621546.8,
+        "min": 39517785,
+        "max": 44637054
+      },
+      "cycles": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "instructions": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "cache_misses": {
+        "unit": "count",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      },
+      "task_clock": {
+        "unit": "ns",
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "last_metrics": {
+      "cycles": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "instructions": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "cache_misses": {
+        "status": "unavailable",
+        "unit": "count",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      },
+      "task_clock": {
+        "status": "unavailable",
+        "unit": "ns",
+        "value": null,
+        "raw_value": null,
+        "time_enabled_ns": 0,
+        "time_running_ns": 0,
+        "errno": 1,
+        "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+      }
+    },
+    "last_resources": {
+      "source": "wait4",
+      "user_cpu_us": 39181,
+      "system_cpu_us": 0,
+      "minor_page_faults": 542,
+      "major_page_faults": 1
+    },
+    "svg": "05-matrix-columns.svg",
+    "png": "05-matrix-columns.png",
+    "summary": "data/matrix-columns/series-2026-11-10-211319-3c4cfa.json"
+  }
+]
