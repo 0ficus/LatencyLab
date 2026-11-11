@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 
-from textual.widgets import Button, DataTable, Input, Select, Static
+from textual.widgets import Button, Checkbox, DataTable, Input, Select, Static
 
 from tui.app import LatencyLabApp
 from tui.analysis import analyze
@@ -90,13 +90,14 @@ class AnalysisTests(unittest.TestCase):
             stalled_backend=1_200_000, stalled_frontend=200_000,
             task_clock=900_000, user=800, system=200, minor=10, major=0,
         )])
-        self.assertIn("backend", report.verdict.lower())
-        titles = " ".join(h.title for h in report.hypotheses)
-        self.assertIn("промахи", titles)
+        self.assertEqual(report.hypotheses[0].key, "memory")
+        self.assertIn("Backend-stall", report.hypotheses[0].evidence)
+        self.assertTrue(report.hypotheses[0].alternatives)
 
-    def test_efficient_program_has_no_bottleneck(self):
+    def test_low_cpi_does_not_prove_absence_of_a_bottleneck(self):
         report = analyze([rich_outcome(cycles=500_000, instructions=1_000_000)])
-        self.assertIn("не видно", report.verdict)
+        self.assertEqual(report.hypotheses, [])
+        self.assertIn("не исключает", report.verdict)
 
     def test_missing_hardware_yields_no_data_verdict(self):
         report = analyze([outcome(None)])
@@ -146,6 +147,31 @@ class RealTUITests(unittest.IsolatedAsyncioTestCase):
             if screenshot:
                 path = Path(screenshot)
                 app.save_screenshot(filename=path.name, path=str(path.parent))
+
+    async def test_baseline_comparison_survives_new_series_and_is_saved(self):
+        app = LatencyLabApp(runner_path=str(RUNNER), results_dir=self.directory, sample=1)
+        async with app.run_test(size=(140, 50)) as pilot:
+            app.query_one("#command", Input).value = "/bin/true"
+            await pilot.click("#run")
+            await self.wait_done(app)
+            self.assertTrue(await pilot.click("#baseline"))
+            self.assertEqual(len(app.baseline_outcomes), 1)
+            self.assertFalse(app.query_one("#equivalent-work", Checkbox).value)
+            app.query_one("#command", Input).value = "/bin/echo candidate"
+            await pilot.pause()
+            app.query_one("#equivalent-work", Checkbox).value = True
+            await pilot.click("#run")
+            await self.wait_done(app)
+            self.assertEqual(app.baseline_outcomes[0].result.command, "/bin/true")
+            saved = json.loads(app.last_summary.read_text())
+            self.assertIn("analysis", saved)
+            self.assertIn("comparison", saved)
+            self.assertTrue(saved["equivalent_work_declared"])
+            self.assertEqual(saved["baseline_runs"][0]["command"], "/bin/true")
+            self.assertIn("Сравнение", str(app.query_one("#diagnosis", Static).render()))
+            app.query_one("#command", Input).value = "/bin/echo other"
+            await pilot.pause()
+            self.assertFalse(app.query_one("#equivalent-work", Checkbox).value)
 
     async def test_cancel_stops_current_binary_and_the_series(self):
         marker = self.directory / "pid"
