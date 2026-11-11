@@ -1,0 +1,29 @@
+{
+  "captured_at": "2026-11-10T21:13:16.316513+03:00",
+  "timezone": "Europe/Moscow (UTC+03:00)",
+  "source_revision": "0e0379d",
+  "platform": "Linux-6.16.10-200.fc42.aarch64-aarch64-with-glibc2.41",
+  "kernel": "6.16.10-200.fc42.aarch64",
+  "architecture": "aarch64",
+  "python": "3.12.13",
+  "textual": "8.2.8",
+  "allowed_cpus": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "selected_cpu": 0,
+  "sample_per_demo": 5,
+  "terminal_columns": 144,
+  "terminal_rows": 44,
+  "capture_method": "Textual save_screenshot of the live result view after real subprocess executions; exported SVG rendered to PNG",
+  "environment": "Linux container in the local macOS virtual machine",
+  "limitations": [
+    "Hardware perf counters are restricted in this environment; unavailable values remain null.",
+    "Wall time covers target process startup, initialization, algorithm, checksum and output.",
+    "CPU affinity does not reserve the CPU exclusively; these runs are not a controlled performance benchmark."
+  ]
+}

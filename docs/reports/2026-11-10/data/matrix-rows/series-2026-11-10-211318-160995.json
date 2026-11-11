@@ -1,0 +1,413 @@
+{
+  "schema_version": 1,
+  "kind": "sample_series",
+  "command": "/workspace/build/demo_matrix 256 3 rows",
+  "sample_requested": 5,
+  "completed": 5,
+  "successful": 5,
+  "cancelled": false,
+  "statistics": {
+    "elapsed_ns": {
+      "unit": "ns",
+      "n": 5,
+      "mean": 23554638.2,
+      "min": 21854529,
+      "max": 29910910
+    },
+    "cycles": {
+      "unit": "count",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    },
+    "instructions": {
+      "unit": "count",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    },
+    "cache_misses": {
+      "unit": "count",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    },
+    "task_clock": {
+      "unit": "ns",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    }
+  },
+  "runs": [
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_matrix 256 3 rows",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 29910910,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 28315,
+        "system_cpu_us": 952,
+        "minor_page_faults": 543,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=matrix mode=rows order=ikj size=256 passes=3 checksum=3623819127\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_matrix",
+        "256",
+        "3",
+        "rows"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_matrix 256 3 rows",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 22014362,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 20694,
+        "system_cpu_us": 960,
+        "minor_page_faults": 543,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=matrix mode=rows order=ikj size=256 passes=3 checksum=3623819127\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_matrix",
+        "256",
+        "3",
+        "rows"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_matrix 256 3 rows",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 22052945,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 21683,
+        "system_cpu_us": 0,
+        "minor_page_faults": 543,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=matrix mode=rows order=ikj size=256 passes=3 checksum=3623819127\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_matrix",
+        "256",
+        "3",
+        "rows"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_matrix 256 3 rows",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 21940445,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 21667,
+        "system_cpu_us": 0,
+        "minor_page_faults": 541,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=matrix mode=rows order=ikj size=256 passes=3 checksum=3623819127\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_matrix",
+        "256",
+        "3",
+        "rows"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_matrix 256 3 rows",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 21854529,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 19628,
+        "system_cpu_us": 1941,
+        "minor_page_faults": 542,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=matrix mode=rows order=ikj size=256 passes=3 checksum=3623819127\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_matrix",
+        "256",
+        "3",
+        "rows"
+      ]
+    }
+  ]
+}

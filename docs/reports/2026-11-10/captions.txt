@@ -1,0 +1,42 @@
+Latency Lab — материалы для отчёта
+
+Дата: 10 ноября 2026, Europe/Moscow. Исходный commit: 0e0379d.
+Все результаты: реальные процессы в Linux-контейнере внутри VM на macOS. Для каждого демо sample=5, CPU=0.
+Скриншоты экспортированы из реального экрана Textual после завершения запусков. PNG получены рендерингом SVG; значения не редактировались.
+
+Аппаратные perf-счётчики в этой среде запрещены. Прочерки и n=0 означают отсутствие измерения. Время и ресурсы процесса измерены реально.
+Время включает запуск процесса, инициализацию, алгоритм, checksum и вывод. CPU не зарезервирован исключительно для теста.
+
+Подписи и значения для отчёта:
+1. Массив: последовательный обход.
+PNG: 01-array-sequential.png
+Команда: /workspace/build/demo_array 32 8 sequential
+Среднее: 20.62 мс; минимум: 19.36 мс; максимум: 25.09 мс.
+Вывод: demo=array mode=sequential size_MB=32 passes=8 checksum=70368760954908
+
+2. Массив: обход с большим шагом.
+PNG: 02-array-strided.png
+Команда: /workspace/build/demo_array 32 8 strided
+Среднее: 84.62 мс; минимум: 78.09 мс; максимум: 89.25 мс.
+Вывод: demo=array mode=strided size_MB=32 passes=8 checksum=70368760954908
+
+3. Бинарный поиск.
+PNG: 03-binary-search.png
+Команда: /workspace/build/demo_binary_search 1048576 200000
+Среднее: 39.20 мс; минимум: 37.14 мс; максимум: 45.73 мс.
+Вывод: demo=binary_search elements=1048576 queries=200000 seed=42 hits=99903 checksum=52447202587
+
+4. Умножение матриц: по строкам (ikj).
+PNG: 04-matrix-rows.png
+Команда: /workspace/build/demo_matrix 256 3 rows
+Среднее: 23.55 мс; минимум: 21.85 мс; максимум: 29.91 мс.
+Вывод: demo=matrix mode=rows order=ikj size=256 passes=3 checksum=3623819127
+
+5. Умножение матриц: по столбцам (ijk).
+PNG: 05-matrix-columns.png
+Команда: /workspace/build/demo_matrix 256 3 columns
+Среднее: 40.62 мс; минимум: 39.52 мс; максимум: 44.64 мс.
+Вывод: demo=matrix mode=columns order=ijk size=256 passes=3 checksum=3623819127
+
+Контрольные суммы совпали между двумя порядками обхода массива и двумя вариантами умножения матриц.
+environment.json — параметры окружения; results.json — общие результаты; data/ — исходные JSON каждого запуска и сводки серий.

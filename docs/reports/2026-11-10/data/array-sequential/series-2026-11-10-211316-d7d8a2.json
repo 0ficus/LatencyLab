@@ -1,0 +1,413 @@
+{
+  "schema_version": 1,
+  "kind": "sample_series",
+  "command": "/workspace/build/demo_array 32 8 sequential",
+  "sample_requested": 5,
+  "completed": 5,
+  "successful": 5,
+  "cancelled": false,
+  "statistics": {
+    "elapsed_ns": {
+      "unit": "ns",
+      "n": 5,
+      "mean": 20623476.2,
+      "min": 19357873,
+      "max": 25092848
+    },
+    "cycles": {
+      "unit": "count",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    },
+    "instructions": {
+      "unit": "count",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    },
+    "cache_misses": {
+      "unit": "count",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    },
+    "task_clock": {
+      "unit": "ns",
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    }
+  },
+  "runs": [
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_array 32 8 sequential",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 25092848,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 17623,
+        "system_cpu_us": 6832,
+        "minor_page_faults": 8347,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=array mode=sequential size_MB=32 passes=8 checksum=70368760954908\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_array",
+        "32",
+        "8",
+        "sequential"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_array 32 8 sequential",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 19738997,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 15260,
+        "system_cpu_us": 4084,
+        "minor_page_faults": 8348,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=array mode=sequential size_MB=32 passes=8 checksum=70368760954908\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_array",
+        "32",
+        "8",
+        "sequential"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_array 32 8 sequential",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 19409873,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 14060,
+        "system_cpu_us": 5010,
+        "minor_page_faults": 8348,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=array mode=sequential size_MB=32 passes=8 checksum=70368760954908\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_array",
+        "32",
+        "8",
+        "sequential"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_array 32 8 sequential",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 19517790,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 15364,
+        "system_cpu_us": 3822,
+        "minor_page_faults": 8348,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=array mode=sequential size_MB=32 passes=8 checksum=70368760954908\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_array",
+        "32",
+        "8",
+        "sequential"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "mock": false,
+      "command": "/workspace/build/demo_array 32 8 sequential",
+      "status": "ok",
+      "error": null,
+      "cpu": 0,
+      "affinity_applied": true,
+      "exit_code": 0,
+      "elapsed_ns": 19357873,
+      "scope": "target_main_thread_user_space_including_exec_and_loader",
+      "kernel": "6.16.10-200.fc42.aarch64",
+      "perf_event_paranoid": "2",
+      "resources": {
+        "source": "wait4",
+        "user_cpu_us": 14310,
+        "system_cpu_us": 4738,
+        "minor_page_faults": 8348,
+        "major_page_faults": 1
+      },
+      "metrics": {
+        "cycles": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "instructions": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "cache_misses": {
+          "status": "unavailable",
+          "unit": "count",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        },
+        "task_clock": {
+          "status": "unavailable",
+          "unit": "ns",
+          "value": null,
+          "raw_value": null,
+          "time_enabled_ns": 0,
+          "time_running_ns": 0,
+          "errno": 1,
+          "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+        }
+      },
+      "stdout": "demo=array mode=sequential size_MB=32 passes=8 checksum=70368760954908\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "argv": [
+        "/workspace/build/demo_array",
+        "32",
+        "8",
+        "sequential"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "mock": false,
+  "command": "/workspace/build/demo_matrix 256 3 columns",
+  "status": "ok",
+  "error": null,
+  "cpu": 0,
+  "affinity_applied": true,
+  "exit_code": 0,
+  "elapsed_ns": 39627160,
+  "scope": "target_main_thread_user_space_including_exec_and_loader",
+  "kernel": "6.16.10-200.fc42.aarch64",
+  "perf_event_paranoid": "2",
+  "resources": {
+    "source": "wait4",
+    "user_cpu_us": 39181,
+    "system_cpu_us": 0,
+    "minor_page_faults": 542,
+    "major_page_faults": 1
+  },
+  "metrics": {
+    "cycles": {
+      "status": "unavailable",
+      "unit": "count",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 1,
+      "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+    },
+    "instructions": {
+      "status": "unavailable",
+      "unit": "count",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 1,
+      "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+    },
+    "cache_misses": {
+      "status": "unavailable",
+      "unit": "count",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 1,
+      "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+    },
+    "task_clock": {
+      "status": "unavailable",
+      "unit": "ns",
+      "value": null,
+      "raw_value": null,
+      "time_enabled_ns": 0,
+      "time_running_ns": 0,
+      "errno": 1,
+      "reason": "perf_event_open: Operation not permitted; check perf_event_paranoid, CAP_PERFMON and sandbox policy"
+    }
+  },
+  "stdout": "demo=matrix mode=columns order=ijk size=256 passes=3 checksum=3623819127\n",
+  "stderr": "",
+  "stdout_truncated": false,
+  "stderr_truncated": false,
+  "argv": [
+    "/workspace/build/demo_matrix",
+    "256",
+    "3",
+    "columns"
+  ]
+}
