@@ -93,6 +93,20 @@ CPU time имеет микросекундные единицы и дискре�
 
 Сверка с `perf stat` запланирована на 13 ноября, пока не выполнена.
 
+## Расширенные счётчики и диагноз
+
+Кроме базовых, runner открывает `cache_references`, `branch_misses`,
+`branches`, `stalled_cycles_backend`, `stalled_cycles_frontend` (аппаратные) и
+`context_switches`, `cpu_migrations` (программные). Первые три
+(cycles/instructions/cache_misses) остаются базовыми — по ним `metrics_probe`
+считает `hardware_counters_available` в строгом режиме. Отдельный счётчик может
+быть недоступен на конкретном CPU/VM; это отражается как `unavailable` с причиной.
+
+Производные индикаторы и гипотезы о причинах задержки считает `tui/analysis.py`
+(`analyze(outcomes)`). По `results/series-*.json` их печатает
+`python3 scripts/analyze.py`. Гипотезы формулируются как предположения с
+доказательствами и подсказкой, что проверить; по одному числу вердикт не выносится.
+
 ## sample в TUI
 
 `sample` — число отдельных запусков, от 1 до 1000. При авто-CPU первый запуск

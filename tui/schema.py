@@ -13,7 +13,19 @@ from typing import Any, Optional
 SCHEMA_VERSION = 1
 
 # Порядок показа метрик, которые мы понимаем.
-KNOWN_METRICS = ("cycles", "instructions", "cache_misses", "task_clock")
+KNOWN_METRICS = (
+    "cycles",
+    "instructions",
+    "cache_misses",
+    "cache_references",
+    "branch_misses",
+    "branches",
+    "stalled_cycles_backend",
+    "stalled_cycles_frontend",
+    "task_clock",
+    "context_switches",
+    "cpu_migrations",
+)
 
 
 class ResultParseError(ValueError):

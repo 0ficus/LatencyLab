@@ -101,7 +101,11 @@ class RunnerIntegration(unittest.TestCase):
         self.assertGreater(result["elapsed_ns"], 0)
         self.assertGreater(result["resources"]["minor_page_faults"], 0)
         self.assertEqual(result["resources"]["source"], "wait4")
-        self.assertEqual(set(result["metrics"]), {"cycles", "instructions", "cache_misses", "task_clock"})
+        self.assertEqual(set(result["metrics"]), {
+            "cycles", "instructions", "cache_misses", "cache_references", "branch_misses",
+            "branches", "stalled_cycles_backend", "stalled_cycles_frontend", "task_clock",
+            "context_switches", "cpu_migrations",
+        })
         for metric in result["metrics"].values():
             if metric["status"] == "unavailable":
                 self.assertIsNone(metric["value"])

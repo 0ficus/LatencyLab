@@ -23,7 +23,7 @@ int main() {
         collector.start();
         requires_logic_error([&] { collector.start(); });
         const auto& metrics = collector.stop();
-        if (metrics.size() != 4) throw std::runtime_error("missing metric");
+        if (metrics.size() != 11) throw std::runtime_error("missing metric");
         requires_logic_error([&] { collector.stop(); });
         requires_logic_error([&] { collector.start(); });
     }

@@ -24,15 +24,24 @@ std::string json_string(const std::string& text) {
 MetricsCollector::MetricsCollector(pid_t tid) {
     if (tid < 0) throw std::invalid_argument("tid must be nonnegative; system-wide monitoring is unsupported");
     struct Event { const char* name; const char* unit; unsigned type; std::uint64_t config; };
+    // Порядок важен: первые три (cycles/instructions/cache_misses) — «базовые
+    // аппаратные», по ним metrics_probe считает hardware_counters_available.
     const Event events[] = {
         {"cycles", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CPU_CYCLES},
         {"instructions", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS},
         {"cache_misses", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_MISSES},
+        {"cache_references", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_CACHE_REFERENCES},
+        {"branch_misses", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_MISSES},
+        {"branches", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_BRANCH_INSTRUCTIONS},
+        {"stalled_cycles_backend", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_BACKEND},
+        {"stalled_cycles_frontend", "count", PERF_TYPE_HARDWARE, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND},
         {"task_clock", "ns", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK},
+        {"context_switches", "count", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES},
+        {"cpu_migrations", "count", PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS},
     };
     // Allocate before acquiring FDs, so allocation failure cannot leak an open FD.
-    metrics_.reserve(4);
-    fds_.reserve(4);
+    metrics_.reserve(sizeof(events) / sizeof(events[0]));
+    fds_.reserve(sizeof(events) / sizeof(events[0]));
     for (const auto& event : events) {
         Metric metric;
         metric.name = event.name;
@@ -62,6 +71,8 @@ void MetricsCollector::fail(std::size_t i, const std::string& operation, int err
     m.reason = operation + ": " + std::strerror(error);
     if (error == EACCES || error == EPERM)
         m.reason += "; check perf_event_paranoid, CAP_PERFMON and sandbox policy";
+    else if (error == ENOENT || error == ENODEV || error == EOPNOTSUPP)
+        m.reason += "; событие не поддерживается этим CPU/PMU";
     if (fds_[i] >= 0) { close(fds_[i]); fds_[i] = -1; }
 }
 void MetricsCollector::start() {

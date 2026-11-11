@@ -26,6 +26,7 @@ from textual.containers import Container, Horizontal, VerticalScroll
 from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Select, Static
 from rich.text import Text
 
+from .analysis import analyze, format_analysis
 from .explanations import METRIC_EXPLANATIONS
 from .runner import DEFAULT_RUNNER, PROJECT_ROOT, RunOutcome, RunnerError, run_runner
 from .schema import RunnerResult
@@ -79,6 +80,7 @@ class LatencyLabApp(App):
     #summary { height: auto; margin-bottom: 1; color: $text-muted; }
     #metrics { height: auto; max-height: 16; margin-bottom: 1; }
     #resources { height: auto; margin-bottom: 1; color: $text-muted; }
+    #diagnosis { height: auto; margin-bottom: 1; }
     #stdout, #stderr { height: auto; color: $text-muted; }
     .section-title { text-style: bold; height: auto; margin-top: 1; }
     """
@@ -130,6 +132,8 @@ class LatencyLabApp(App):
             yield Label("Метрики", classes="section-title")
             yield DataTable(id="metrics")
             yield Static("", id="resources")
+            yield Label("Диагноз", classes="section-title")
+            yield Static("", id="diagnosis", markup=False)
             yield Label("Вывод программы (stdout)", classes="section-title")
             yield Static("", id="stdout", markup=False)
             yield Label("Ошибки программы (stderr)", classes="section-title")
@@ -225,8 +229,9 @@ class LatencyLabApp(App):
                 if self._cancel.is_set():
                     break
                 self._set_status(f"Запуск {index}/{sample}…", running=True)
-                outcome = await asyncio.to_thread(
-                    run_runner, command, cpu, self.runner_path, self.runner_timeout, self._cancel
+                loop = asyncio.get_running_loop()
+                outcome = await loop.run_in_executor(
+                    None, run_runner, command, cpu, self.runner_path, self.runner_timeout, self._cancel
                 )
                 self.outcomes.append(outcome)
                 if cpu is None:
@@ -267,6 +272,7 @@ class LatencyLabApp(App):
         self._render_summary(result)
         self._render_metrics(result)
         self._render_resources(result)
+        self._render_diagnosis()
         self._render_output(result)
 
     def _render_summary(self, result: RunnerResult) -> None:
@@ -315,6 +321,9 @@ class LatencyLabApp(App):
             parts.append(f"major faults: {res.major_page_faults}")
         self.query_one("#resources", Static).update("Последний запуск: " + "  •  ".join(parts) if parts else "")
 
+    def _render_diagnosis(self) -> None:
+        self.query_one("#diagnosis", Static).update(format_analysis(analyze(self.outcomes)))
+
     def _render_output(self, result: RunnerResult) -> None:
         stdout = result.stdout[:STDOUT_PREVIEW]
         stderr = result.stderr[:STDOUT_PREVIEW]
@@ -355,6 +364,7 @@ class LatencyLabApp(App):
         self.query_one("#summary", Static).update("")
         self.query_one("#metrics", DataTable).clear()
         self.query_one("#resources", Static).update("")
+        self.query_one("#diagnosis", Static).update("")
         self.query_one("#stdout", Static).update("")
         self.query_one("#stderr", Static).update("")
 

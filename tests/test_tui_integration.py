@@ -11,6 +11,7 @@ import unittest
 from textual.widgets import Button, DataTable, Input, Select, Static
 
 from tui.app import LatencyLabApp
+from tui.analysis import analyze
 from tui.runner import RunOutcome
 from tui.schema import ResultParseError, parse_result
 from tui.statistics import summarize
@@ -24,6 +25,40 @@ def outcome(value, *, status="ok", elapsed=1):
         "schema_version": 1, "command": "test", "status": status,
         "exit_code": 0 if status == "ok" else 7, "elapsed_ns": elapsed,
         "metrics": {"cycles": {"status": "available" if value is not None else "unavailable", "value": value}},
+    }
+    return RunOutcome(parse_result(data), data)
+
+
+def rich_outcome(*, cycles, instructions, cache_misses=None, cache_references=None,
+                 branch_misses=None, branches=None, stalled_backend=None,
+                 stalled_frontend=None, task_clock=None, user=None, system=None,
+                 minor=None, major=None, elapsed=1_000_000):
+    def metric(unit, value):
+        return {
+            "status": "available" if value is not None else "unavailable",
+            "unit": unit, "value": value, "raw_value": value,
+            "time_enabled_ns": 1000, "time_running_ns": 1000,
+            "errno": 0, "reason": None,
+        }
+
+    data = {
+        "schema_version": 1, "command": "test", "status": "ok", "exit_code": 0,
+        "elapsed_ns": elapsed,
+        "metrics": {
+            "cycles": metric("count", cycles),
+            "instructions": metric("count", instructions),
+            "cache_misses": metric("count", cache_misses),
+            "cache_references": metric("count", cache_references),
+            "branch_misses": metric("count", branch_misses),
+            "branches": metric("count", branches),
+            "stalled_cycles_backend": metric("count", stalled_backend),
+            "stalled_cycles_frontend": metric("count", stalled_frontend),
+            "task_clock": metric("ns", task_clock),
+            "context_switches": metric("count", 0),
+            "cpu_migrations": metric("count", 0),
+        },
+        "resources": {"source": "wait4", "user_cpu_us": user, "system_cpu_us": system,
+                      "minor_page_faults": minor, "major_page_faults": major},
     }
     return RunOutcome(parse_result(data), data)
 
@@ -46,6 +81,28 @@ class StatisticsTests(unittest.TestCase):
             parse_result(data)
 
 
+class AnalysisTests(unittest.TestCase):
+    def test_memory_bound_is_detected(self):
+        report = analyze([rich_outcome(
+            cycles=3_000_000, instructions=1_000_000,
+            cache_misses=100_000, cache_references=500_000,
+            branch_misses=1_000, branches=1_000_000,
+            stalled_backend=1_200_000, stalled_frontend=200_000,
+            task_clock=900_000, user=800, system=200, minor=10, major=0,
+        )])
+        self.assertIn("backend", report.verdict.lower())
+        titles = " ".join(h.title for h in report.hypotheses)
+        self.assertIn("промахи", titles)
+
+    def test_efficient_program_has_no_bottleneck(self):
+        report = analyze([rich_outcome(cycles=500_000, instructions=1_000_000)])
+        self.assertIn("не видно", report.verdict)
+
+    def test_missing_hardware_yields_no_data_verdict(self):
+        report = analyze([outcome(None)])
+        self.assertIn("недостаточно", report.verdict.lower())
+
+
 @unittest.skipUnless(sys.platform == "linux" and RUNNER.is_file(), "Built Linux runner required")
 class RealTUITests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
@@ -62,7 +119,7 @@ class RealTUITests(unittest.IsolatedAsyncioTestCase):
 
     async def test_sample_field_runs_three_real_processes_and_saves_statistics(self):
         marker = self.directory / "launches with spaces.txt"
-        code = "import os,sys,time;open(sys.argv[1],'a').write('run\\n');print(sorted(os.sched_getaffinity(0)));print('[literal markup]');time.sleep(0.1)"
+        code = "import os,sys,time;open(sys.argv[1],'a').write('run\\n');print(sorted(os.sched_getaffinity(0)));print('[literal markup]');time.sleep(0.5)"
         command = shlex.join([sys.executable, "-c", code, str(marker)])
         app = LatencyLabApp(runner_path=str(RUNNER), results_dir=self.directory, sample=1)
         async with app.run_test(size=(140, 46)) as pilot:
@@ -83,7 +140,7 @@ class RealTUITests(unittest.IsolatedAsyncioTestCase):
             summary = json.loads(app.last_summary.read_text())
             self.assertEqual(summary["sample_requested"], 3)
             self.assertEqual(summary["statistics"]["elapsed_ns"]["n"], 3)
-            self.assertEqual(app.query_one("#metrics", DataTable).row_count, 5)
+            self.assertEqual(app.query_one("#metrics", DataTable).row_count, 12)
             self.assertTrue(app.query_one("#status", Static).has_class("ok"))
             screenshot = os.environ.get("LATENCYLAB_SCREENSHOT")
             if screenshot:
