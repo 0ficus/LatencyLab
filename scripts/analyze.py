@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""CLI-диагноз причин задержки по сохранённым результатам LatencyLab.
-
-Читает results/series-*.json (со сводкой серии) или отдельные results/run-*.json
-и печатает производные индикаторы и гипотезы о причинах задержки.
-
-Примеры:
-    python3 scripts/analyze.py results/series-*.json
-    python3 scripts/analyze.py results/run-*.json
-    python3 scripts/analyze.py results/series-*.json --max-hypotheses 5
-"""
+"""Analyze saved runs, grouped by command/conditions; optionally compare a baseline."""
 from __future__ import annotations
 
 import argparse
@@ -22,52 +13,78 @@ sys.path.insert(0, str(ROOT))
 
 from tui.runner import RunOutcome  # noqa: E402
 from tui.schema import ResultParseError, parse_result  # noqa: E402
-from tui.analysis import analyze, format_analysis  # noqa: E402
+from tui.analysis import _identity, analyze, format_analysis  # noqa: E402
+from tui.comparison import compare, format_comparison  # noqa: E402
 
 
 def _collect(files: list[str]) -> list[RunOutcome]:
-    outcomes: list[RunOutcome] = []
+    outcomes = []
+    seen = set()
     for arg in files:
-        expanded = glob.glob(arg) or [arg]
-        for name in expanded:
-            path = Path(name)
-            if not path.is_file():
-                print(f"  предупреждение: нет файла {path}", file=sys.stderr)
+        for name in sorted(glob.glob(arg)) or [arg]:
+            path = Path(name).resolve()
+            if path in seen:
                 continue
+            seen.add(path)
             try:
                 raw = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
-                print(f"  предупреждение: не удалось прочитать {path}: {exc}", file=sys.stderr)
+                if not isinstance(raw, dict):
+                    raise ValueError("ожидался JSON-объект")
+                runs = raw.get("runs") if raw.get("kind") == "sample_series" else [raw]
+                if not isinstance(runs, list):
+                    raise ValueError("runs должен быть массивом")
+            except (OSError, ValueError) as exc:
+                print(f"Предупреждение: {path.name}: {exc}", file=sys.stderr)
                 continue
-            if raw.get("kind") == "sample_series":
-                runs = raw.get("runs", [])
-                for run in runs:
-                    _append(outcomes, run, path.name)
-            else:
-                _append(outcomes, raw, path.name)
+            for run in runs:
+                try:
+                    outcomes.append(RunOutcome(parse_result(run), run))
+                except (ResultParseError, OverflowError) as exc:
+                    print(f"Предупреждение: пропущен запуск из {path.name}: {exc}", file=sys.stderr)
     return outcomes
 
 
-def _append(outcomes: list[RunOutcome], raw: dict, source: str) -> None:
-    try:
-        outcomes.append(RunOutcome(parse_result(raw), raw))
-    except ResultParseError as exc:
-        print(f"  предупреждение: пропущен запуск из {source}: {exc}", file=sys.stderr)
-
-
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Диагноз причин задержки по результатам LatencyLab")
-    parser.add_argument("files", nargs="+", help="results/series-*.json или results/run-*.json")
-    parser.add_argument("--max-hypotheses", type=int, default=3, help="сколько гипотез показывать")
+    parser = argparse.ArgumentParser(description="Гипотезы о задержках, качество измерений и сравнение серий")
+    parser.add_argument("files", nargs="+", help="JSON запусков или серий")
+    parser.add_argument("--baseline", help="JSON базовой серии для сравнения с одним вариантом")
+    parser.add_argument("--equivalent-work", action="store_true", help="вы проверили, что база и вариант решают одну задачу на одинаковых данных")
+    parser.add_argument("--json", action="store_true", help="структурированный результат анализа в stdout")
+    parser.add_argument("--max-hypotheses", type=int, default=3)
     args = parser.parse_args(argv)
-
+    if args.max_hypotheses < 0:
+        parser.error("--max-hypotheses должен быть неотрицательным")
+    if args.equivalent_work and not args.baseline:
+        parser.error("--equivalent-work требует --baseline")
     outcomes = _collect(args.files)
     if not outcomes:
         print("Не удалось разобрать ни одного запуска.", file=sys.stderr)
         return 1
-
-    print(f"Запусков: {len(outcomes)}, команда: {outcomes[0].result.command}")
-    print(format_analysis(analyze(outcomes), args.max_hypotheses))
+    if args.baseline:
+        baseline = _collect([args.baseline])
+        if not baseline:
+            print("Базовая серия пуста.", file=sys.stderr)
+            return 1
+        report = compare(baseline, outcomes, equivalent_work=args.equivalent_work)
+        if args.json:
+            print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+        else:
+            print(format_analysis(report.candidate, args.max_hypotheses))
+            print(format_comparison(report))
+        return 0
+    # Never pool unrelated workloads from a shell wildcard into a diagnosis.
+    groups = {}
+    for o in outcomes:
+        groups.setdefault(_identity(o), []).append(o)
+    reports = []
+    for group in groups.values():
+        analysis = analyze(group)
+        reports.append({"command": group[0].result.command, "analysis": analysis.to_dict()})
+        if not args.json:
+            print(f"\nКоманда: {group[0].result.command}; запусков: {len(group)}")
+            print(format_analysis(analysis, args.max_hypotheses))
+    if args.json:
+        print(json.dumps({"groups": reports}, ensure_ascii=False, indent=2))
     return 0
 
 

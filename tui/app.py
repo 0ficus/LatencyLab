@@ -17,16 +17,18 @@ import sys
 import threading
 import uuid
 from datetime import datetime
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional
 
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
-from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Select, Static
+from textual.widgets import Button, Checkbox, DataTable, Footer, Header, Input, Label, Select, Static
 from rich.text import Text
 
 from .analysis import analyze, format_analysis
+from .comparison import compare, format_comparison
 from .explanations import METRIC_EXPLANATIONS
 from .runner import DEFAULT_RUNNER, PROJECT_ROOT, RunOutcome, RunnerError, run_runner
 from .schema import RunnerResult
@@ -64,7 +66,10 @@ class LatencyLabApp(App):
     #controls { height: auto; padding: 1 2; }
     #controls Input { margin-bottom: 1; }
     #demo-select { margin-bottom: 1; }
-    #row { height: auto; }
+    #row, #comparison-controls { height: auto; }
+    #baseline { width: 18; min-width: 18; }
+    #equivalent-work { width: 1fr; }
+    #baseline-label { height: auto; color: $text-muted; }
     #cpu-label { width: 5; height: 3; content-align: center middle; }
     #cpu { width: 15; margin-right: 1; }
     #sample-label { width: 7; height: 3; content-align: center middle; }
@@ -106,6 +111,7 @@ class LatencyLabApp(App):
         self.last_saved: Optional[Path] = None
         self._run_index = 0
         self.outcomes: list[RunOutcome] = []
+        self.baseline_outcomes: list[RunOutcome] = []
         self.last_summary: Optional[Path] = None
         self._busy = False
         self._cancel = threading.Event()
@@ -126,13 +132,17 @@ class LatencyLabApp(App):
                 yield Button("▶ Запустить", id="run", variant="primary")
                 yield Button("Стоп", id="stop", disabled=True)
                 yield Button("Очистить", id="clear")
+            with Horizontal(id="comparison-controls"):
+                yield Button("Запомнить базу", id="baseline")
+                yield Checkbox("Одинаковая задача и данные", id="equivalent-work")
+            yield Static("База для сравнения не выбрана.", id="baseline-label", markup=False)
             yield Static("Готов к работе.", id="status", markup=False)
         with VerticalScroll(id="results"):
             yield Static("", id="summary", markup=False)
             yield Label("Метрики", classes="section-title")
             yield DataTable(id="metrics")
             yield Static("", id="resources")
-            yield Label("Диагноз", classes="section-title")
+            yield Label("Гипотезы и качество измерений", classes="section-title")
             yield Static("", id="diagnosis", markup=False)
             yield Label("Вывод программы (stdout)", classes="section-title")
             yield Static("", id="stdout", markup=False)
@@ -159,6 +169,11 @@ class LatencyLabApp(App):
         if not self._busy and isinstance(event.value, str):
             self._apply_demo(event.value)
 
+    @on(Input.Changed, "#command")
+    def _command_changed(self, event: Input.Changed) -> None:
+        if self.baseline_outcomes and not self._busy:
+            self.query_one("#equivalent-work", Checkbox).value = False
+
     @on(Input.Submitted, "#command")
     def _submit_command(self, event: Input.Submitted) -> None:
         self._start_run()
@@ -178,6 +193,25 @@ class LatencyLabApp(App):
         self._clear_results()
         self._set_status("Готов к работе.")
 
+    @on(Button.Pressed, "#baseline")
+    def _remember_baseline(self, event: Button.Pressed) -> None:
+        if self._busy:
+            return
+        if not any(o.result.status == "ok" and o.result.exit_code == 0 for o in self.outcomes):
+            self._set_status("Сначала выполните успешную базовую серию.", error=True)
+            return
+        self.baseline_outcomes = deepcopy(self.outcomes)
+        self.query_one("#equivalent-work", Checkbox).value = False
+        self.query_one("#baseline-label", Static).update(
+            f"База: {self.baseline_outcomes[0].result.command} ({len(self.baseline_outcomes)} запусков)."
+        )
+        self._set_status("База сохранена. Запустите второй вариант; отметьте эквивалентность, если проверили её.")
+
+    @on(Checkbox.Changed, "#equivalent-work")
+    def _equivalence_changed(self, event: Checkbox.Changed) -> None:
+        if self.outcomes:
+            self._render_diagnosis()
+
     # --- запуск ---------------------------------------------------------------
 
     @on(Button.Pressed, "#stop")
@@ -190,7 +224,7 @@ class LatencyLabApp(App):
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
-        for selector in ("#demo-select", "#command", "#cpu", "#sample", "#run", "#clear"):
+        for selector in ("#demo-select", "#command", "#cpu", "#sample", "#run", "#clear", "#baseline", "#equivalent-work"):
             self.query_one(selector).disabled = busy
         self.query_one("#stop", Button).disabled = not busy
 
@@ -322,7 +356,13 @@ class LatencyLabApp(App):
         self.query_one("#resources", Static).update("Последний запуск: " + "  •  ".join(parts) if parts else "")
 
     def _render_diagnosis(self) -> None:
-        self.query_one("#diagnosis", Static).update(format_analysis(analyze(self.outcomes)))
+        text = format_analysis(analyze(self.outcomes))
+        if self.baseline_outcomes:
+            text += "\n\n" + format_comparison(compare(
+                self.baseline_outcomes, self.outcomes,
+                equivalent_work=self.query_one("#equivalent-work", Checkbox).value,
+            ))
+        self.query_one("#diagnosis", Static).update(text)
 
     def _render_output(self, result: RunnerResult) -> None:
         stdout = result.stdout[:STDOUT_PREVIEW]
@@ -353,6 +393,12 @@ class LatencyLabApp(App):
             "cancelled": self._cancel.is_set(), "statistics": summarize(self.outcomes),
             "runs": [item.raw for item in self.outcomes],
         }
+        data["analysis"] = analyze(self.outcomes).to_dict()
+        if self.baseline_outcomes:
+            equivalent = self.query_one("#equivalent-work", Checkbox).value
+            data["baseline_runs"] = [item.raw for item in self.baseline_outcomes]
+            data["equivalent_work_declared"] = equivalent
+            data["comparison"] = compare(self.baseline_outcomes, self.outcomes, equivalent_work=equivalent).to_dict()
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         return path
 
