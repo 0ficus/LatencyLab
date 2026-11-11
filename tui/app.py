@@ -4,8 +4,8 @@
   - controls: поле команды, поле CPU, кнопки «Запустить»/«Очистить», статус;
   - results: сводка, таблица метрик, ресурсы, захваченный stdout/stderr.
 
-TUI сам целевую программу не запускает: он делегирует это runner'у (в проде —
-C++ бинарник, в разработке — мок) и лишь отрисовывает его JSON.
+Обычные измерения делегируются C++ runner'у и отображаются из JSON.
+Отдельный экран «Участки кода» делает один запуск через perf для привязки к исходнику.
 """
 from __future__ import annotations
 
@@ -34,6 +34,7 @@ from .runner import DEFAULT_RUNNER, PROJECT_ROOT, RunOutcome, RunnerError, run_r
 from .schema import RunnerResult
 from .statistics import summarize
 from .demos import CHOICES as DEMO_CHOICES, command as demo_command
+from .hotspot_screen import HotspotScreen
 
 STDOUT_PREVIEW = 4000  # сколько символов вывода программы показываем в TUI
 
@@ -65,7 +66,9 @@ class LatencyLabApp(App):
     CSS = """
     #controls { height: auto; padding: 1 2; }
     #controls Input { margin-bottom: 1; }
-    #demo-select { margin-bottom: 1; }
+    #demo-row { height: auto; }
+    #demo-select { margin-bottom: 1; width: 1fr; }
+    #hotspots { width: 18; margin-left: 1; }
     #row, #comparison-controls { height: auto; }
     #baseline { width: 18; min-width: 18; }
     #equivalent-work { width: 1fr; }
@@ -121,7 +124,9 @@ class LatencyLabApp(App):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         with Container(id="controls"):
-            yield Select(DEMO_CHOICES, value=self.demo_name, allow_blank=False, id="demo-select")
+            with Horizontal(id="demo-row"):
+                yield Select(DEMO_CHOICES, value=self.demo_name, allow_blank=False, id="demo-select")
+                yield Button("Участки кода", id="hotspots")
             yield Label("Команда для запуска", classes="section-title")
             yield Input(placeholder="python demo.py --size 1024", id="command")
             with Horizontal(id="row"):
@@ -193,6 +198,21 @@ class LatencyLabApp(App):
         self._clear_results()
         self._set_status("Готов к работе.")
 
+    @on(Button.Pressed, "#hotspots")
+    def _open_hotspots(self) -> None:
+        if self._busy:
+            return
+        command = self.query_one("#command", Input).value.strip()
+        cpu_text = self.query_one("#cpu", Input).value.strip()
+        if not command:
+            self._set_status("Введите команду.", error=True)
+            return
+        if cpu_text and (not cpu_text.isdigit() or len(cpu_text) > 4 or int(cpu_text) > 1023):
+            self._set_status("CPU должен быть целым числом или пустым.", error=True)
+            return
+        self.push_screen(HotspotScreen(command, int(cpu_text) if cpu_text else None,
+                                      self.results_dir, self.runner_timeout))
+
     @on(Button.Pressed, "#baseline")
     def _remember_baseline(self, event: Button.Pressed) -> None:
         if self._busy:
@@ -224,7 +244,7 @@ class LatencyLabApp(App):
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
-        for selector in ("#demo-select", "#command", "#cpu", "#sample", "#run", "#clear", "#baseline", "#equivalent-work"):
+        for selector in ("#demo-select", "#hotspots", "#command", "#cpu", "#sample", "#run", "#clear", "#baseline", "#equivalent-work"):
             self.query_one(selector).disabled = busy
         self.query_one("#stop", Button).disabled = not busy
 

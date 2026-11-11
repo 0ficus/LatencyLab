@@ -10,7 +10,7 @@ Python TUI запускает внешний бинарник через C++ run
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build -j 2
 python3 -m tui --demo
 ```
@@ -28,6 +28,12 @@ python3 -m tui --demo matrix-columns
 ```
 
 Все команды и параметры: [готовые демо](docs/demos.md).
+
+Кнопка **«Участки кода»** открывает отдельный небольшой профилировщик: CPU или
+cache misses, топ-5 мест и исходник вокруг выбранной строки. Для привязки к коду
+нужна сборка с `-DCMAKE_BUILD_TYPE=RelWithDebInfo`, а на Linux — установленный perf.
+Это один отдельный запуск; `sample` к нему не применяется.
+[Подготовка и ограничения](docs/hotspots.md).
 
 [Скриншоты и результаты 25 демонстрационных запусков](docs/reports/2026-11-10/README.md) — пять экранов TUI, исходные JSON и параметры среды. Аппаратные perf-счётчики в этой среде недоступны.
 
