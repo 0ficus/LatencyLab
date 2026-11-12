@@ -18,6 +18,7 @@ from unittest.mock import patch
 
 from textual.widgets import Button, DataTable, Input, Static
 
+from tui._compat import to_thread
 from tui.app import LatencyLabApp
 from tui.hotspot_screen import HotspotScreen
 from tui.hotspots import parse_report, source_preview
@@ -226,7 +227,7 @@ class HotspotScreenTests(unittest.IsolatedAsyncioTestCase):
                     await asyncio.sleep(0.01)
                 self.assertTrue(started.is_set())
                 await pilot.press("escape")
-                self.assertTrue(await asyncio.to_thread(stopped.wait, 2))
+                self.assertTrue(await to_thread(stopped.wait, 2))
 
     async def test_permission_error_shown_in_screen(self):
         app = LatencyLabApp()

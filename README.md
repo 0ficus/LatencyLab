@@ -84,4 +84,4 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 
 CTest проверяет библиотеку метрик, Linux runner и корректность вычислений демо. Python-тесты проверяют статистику и реальный TUI через Textual Pilot: число запусков, выбор демо, остановку, закрытие приложения и обработку ошибок. Тест аппаратных cycles пропускается, если PMU недоступен.
 
-Подробнее: [TUI](tui/README.md), [интеграция MetricsCollector](docs/integration.md).
+Подробнее: [TUI](tui/README.md), [интеграция MetricsCollector](docs/integration.md), [ИИ-диагноз](docs/llm.md).

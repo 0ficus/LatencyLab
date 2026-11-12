@@ -1,0 +1,353 @@
+diff --git a/README.md b/README.md
+index fb1698d..52af85b 100644
+--- a/README.md
++++ b/README.md
+@@ -84,4 +84,4 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
+ 
+ CTest проверяет библиотеку метрик, Linux runner и корректность вычислений демо. Python-тесты проверяют статистику и реальный TUI через Textual Pilot: число запусков, выбор демо, остановку, закрытие приложения и обработку ошибок. Тест аппаратных cycles пропускается, если PMU недоступен.
+ 
+-Подробнее: [TUI](tui/README.md), [интеграция MetricsCollector](docs/integration.md).
++Подробнее: [TUI](tui/README.md), [интеграция MetricsCollector](docs/integration.md), [ИИ-диагноз](docs/llm.md).
+diff --git a/docs/hotspots.md b/docs/hotspots.md
+index a3dce74..337cfb6 100644
+--- a/docs/hotspots.md
++++ b/docs/hotspots.md
+@@ -65,6 +65,8 @@ CPU-профиль не показывает ожидание блокировк
+ 
+ ## ИИ-диагноз (опционально)
+ 
++> Полная инструкция по настройке (DeepSeek / Ollama / Claude): [docs/llm.md](llm.md).
++
+ Кнопка **«ИИ-диагноз»** на экране профиля отправляет внешнему LLM горячий код
+ (топ-5 мест с фрагментами исходника) и, если обычная серия уже запущена, её
+ метрики и выводы из `analyze`. Модель возвращает короткий вердикт, вероятную
+diff --git a/docs/llm.md b/docs/llm.md
+new file mode 100644
+index 0000000..cb2558f
+--- /dev/null
++++ b/docs/llm.md
+@@ -0,0 +1,91 @@
++# ИИ-диагноз: настройка LLM
++
++Кнопка **«ИИ-диагноз»** на экране «Участки кода» отправляет внешней модели
++горячий код (топ-5 мест с фрагментами исходника) и, если обычная серия уже
++запускалась, её метрики и выводы `analyze`. Модель возвращает короткий вердикт,
++вероятную причину задержки и 2–3 эксперимента для проверки. Это дополнение к
++обычному диагнозу `analysis.py`, а не замена: без сети/ключа обычный диагноз
++работает как раньше.
++
++Поддерживаются два типа провайдеров:
++
++- **OpenAI-совместимый** — DeepSeek (по умолчанию), локальная Ollama или любой
++  другой сервер с эндпоинтом `/v1/chat/completions`.
++- **Anthropic Claude** — через официальный SDK (`anthropic`).
++
++Ключ читается только из переменных окружения, нигде не сохраняется и не
++попадает в `results/` и логи.
++
++## Переменные окружения
++
++| Переменная | По умолчанию | Назначение |
++| --- | --- | --- |
++| `LATENCYLAB_LLM_PROVIDER` | `auto` | `anthropic` или `openai`. При `auto` выбирается Claude, если задан `ANTHROPIC_API_KEY`, иначе OpenAI-совместимый |
++| `LATENCYLAB_LLM_MODEL` | `deepseek-chat` (openai) / `claude-opus-4-8` (anthropic) | имя модели |
++| `LATENCYLAB_LLM_BASE_URL` | `https://api.deepseek.com` | база OpenAI-совместимого API (игнорируется для Claude) |
++| `LATENCYLAB_LLM_API_KEY` / `DEEPSEEK_API_KEY` | — | ключ OpenAI-совместимого API; первый приоритетнее |
++| `ANTHROPIC_API_KEY` | — | ключ Claude |
++
++Переменные читаются один раз на запрос; после изменения перезапустите TUI.
++
++## 1. DeepSeek (по умолчанию)
++
++```bash
++export DEEPSEEK_API_KEY="sk-..."
++.venv/bin/python -m tui --demo matrix-columns
++```
++
++Где взять ключ: [platform.deepseek.com](https://platform.deepseek.com) → API Keys.
++
++## 2. Локальная Ollama (без ключа, код не покидает машину)
++
++```bash
++ollama pull qwen2.5-coder:7b
++ollama serve &                      # если сервер ещё не запущен
++export LATENCYLAB_LLM_BASE_URL=http://localhost:11434/v1
++export LATENCYLAB_LLM_MODEL=qwen2.5-coder:7b
++```
++
++При отсутствии ключа и заданном `LATENCYLAB_LLM_BASE_URL` провайдер считается
++настроенным — ключ не нужен. Инференс идёт на CPU, поэтому скорость зависит от
++железа; на слабых/переподписанных хостах ответ может идти долго (штатный таймаут
++OpenAI-пути — 60 с, см. `REQUEST_TIMEOUT_S` в `tui/llm.py`).
++
++## 3. Claude (Anthropic)
++
++Нужен пакет `anthropic` (он не входит в основные зависимости):
++
++```bash
++.venv/bin/pip install anthropic
++export ANTHROPIC_API_KEY="sk-ant-..."
++export LATENCYLAB_LLM_PROVIDER=anthropic        # необязательно: автоопределение по ключу
++export LATENCYLAB_LLM_MODEL=claude-opus-4-8     # по умолчанию
++```
++
++Модель по умолчанию — `claude-opus-4-8`. Доступные ID (см. каталог моделей Anthropic):
++
++| Модель | Назначение |
++| --- | --- |
++| `claude-opus-4-8` | по умолчанию, самая сильная |
++| `claude-sonnet-5` | дешевле, почти Opus-качество на коде |
++| `claude-haiku-4-5` | самая быстрая и дешёвая |
++
++Для Claude используются нативный Messages API и `ANTHROPIC_API_KEY`; параметры
++`LATENCYLAB_LLM_BASE_URL` / `DEEPSEEK_API_KEY` не задействуются.
++
++## Автоопределение провайдера
++
++Если `LATENCYLAB_LLM_PROVIDER` не задан:
++
++- задан `ANTHROPIC_API_KEY` → **Claude**;
++- иначе → **OpenAI-совместимый** (DeepSeek по умолчанию, Ollama при заданном base_url).
++
++Явное `LATENCYLAB_LLM_PROVIDER=openai` или `=anthropic` всегда имеет приоритет.
++
++## Безопасность
++
++- Ключ читается только из env: `os.environ`, без файлов, без логирования.
++- Сам код и метрики передаются выбранному провайдеру. Если отправлять код наружу
++  недопустимо — используйте локальную Ollama.
++- При отсутствии ключа или недоступной сети кнопка «ИИ-диагноз» показывает
++  понятную ошибку и не блокирует приложение.
+diff --git a/requirements.txt b/requirements.txt
+index 096eb54..300d75f 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,3 +1,5 @@
+ textual>=0.80.0
+ # В среде без системного cmake (или без sudo) ставим его через pip.
+ cmake
++# Опционально, только для ИИ-анализа через Claude (Anthropic):
++# anthropic
+diff --git a/tests/test_hotspots.py b/tests/test_hotspots.py
+index f116d7a..2dba6f1 100644
+--- a/tests/test_hotspots.py
++++ b/tests/test_hotspots.py
+@@ -18,6 +18,7 @@ from unittest.mock import patch
+ 
+ from textual.widgets import Button, DataTable, Input, Static
+ 
++from tui._compat import to_thread
+ from tui.app import LatencyLabApp
+ from tui.hotspot_screen import HotspotScreen
+ from tui.hotspots import parse_report, source_preview
+@@ -226,7 +227,7 @@ class HotspotScreenTests(unittest.IsolatedAsyncioTestCase):
+                     await asyncio.sleep(0.01)
+                 self.assertTrue(started.is_set())
+                 await pilot.press("escape")
+-                self.assertTrue(await asyncio.to_thread(stopped.wait, 2))
++                self.assertTrue(await to_thread(stopped.wait, 2))
+ 
+     async def test_permission_error_shown_in_screen(self):
+         app = LatencyLabApp()
+diff --git a/tui/_compat.py b/tui/_compat.py
+new file mode 100644
+index 0000000..d7afb19
+--- /dev/null
++++ b/tui/_compat.py
+@@ -0,0 +1,13 @@
++"""Совместимость с Python 3.8: asyncio.to_thread появился только в 3.9."""
++from __future__ import annotations
++
++import asyncio
++import functools
++
++try:  # Python 3.9+
++    from asyncio import to_thread  # noqa: F401
++except ImportError:  # Python 3.8 — эквивалент через run_in_executor
++    def to_thread(func, *args, **kwargs):
++        """Запустить func в отдельном потоке; awaitable, как asyncio.to_thread."""
++        loop = asyncio.get_running_loop()
++        return loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
+diff --git a/tui/hotspot_screen.py b/tui/hotspot_screen.py
+index 4e65420..d34a312 100644
+--- a/tui/hotspot_screen.py
++++ b/tui/hotspot_screen.py
+@@ -13,6 +13,7 @@ from textual.containers import Container, Horizontal, VerticalScroll
+ from textual.screen import ModalScreen
+ from textual.widgets import Button, DataTable, Static
+ 
++from ._compat import to_thread
+ from .analysis import Analysis
+ from .hotspots import source_preview
+ from .llm import LLMError, config_issue, diagnose
+@@ -99,8 +100,8 @@ class HotspotScreen(ModalScreen):
+     @work(exclusive=True, group="profile")
+     async def _profile(self, mode: str) -> None:
+         try:
+-            result = await asyncio.to_thread(profile, self.command, mode, self.cpu,
+-                                             self.results_dir, self.timeout, self._cancel)
++            result = await to_thread(profile, self.command, mode, self.cpu,
++                                     self.results_dir, self.timeout, self._cancel)
+             if not self.is_mounted:
+                 return
+             self.result = result
+@@ -173,7 +174,7 @@ class HotspotScreen(ModalScreen):
+         try:
+             result = self.result
+             previews = [source_preview(item.location) for item in result.hotspots]
+-            answer = await asyncio.to_thread(
++            answer = await to_thread(
+                 diagnose, command=self.command, mode=result.mode, cpu=result.cpu,
+                 kernel=self.kernel, total_samples=result.total_samples,
+                 hotspots=result.hotspots, previews=previews, analysis=self.analysis)
+diff --git a/tui/hotspots.py b/tui/hotspots.py
+index 6fafb4c..6762063 100644
+--- a/tui/hotspots.py
++++ b/tui/hotspots.py
+@@ -30,9 +30,11 @@ def parse_report(report: str) -> tuple[list[Hotspot], int]:
+         if not row.strip() or row.lstrip().startswith("#"):
+             continue
+         fields = [field.strip() for field in row.split("\t")]
+-        if len(fields) != 5 or not fields[1].isdigit():
+-            raise ValueError("Неожиданный формат perf report (ожидались 5 полей через TAB).")
+-        _, samples, symbol, location, dso = fields
++        # Некоторые сборки perf добавляют хвостовые колонки (IPC, [IPC Coverage]);
++        # нужны только первые пять: overhead, sample, symbol, srcline, dso.
++        if len(fields) < 5 or not fields[1].isdigit():
++            raise ValueError("Неожиданный формат perf report (ожидались ≥5 полей через TAB).")
++        _, samples, symbol, location, dso = fields[:5]
+         symbol = re.sub(r"^\[[^]]+\]\s*", "", symbol)
+         key = (symbol or "[unknown]", location or "??:0", dso or "[unknown]")
+         counts[key] = counts.get(key, 0) + int(samples)
+diff --git a/tui/llm.py b/tui/llm.py
+index 1739afb..a4b2065 100644
+--- a/tui/llm.py
++++ b/tui/llm.py
+@@ -1,9 +1,11 @@
+-"""Один HTTPS-запрос к OpenAI-совместимому LLM для объяснения горячего кода.
++"""ИИ-диагноз горячего кода через внешний LLM.
+ 
+-Провайдер настраивается переменными окружения; по умолчанию DeepSeek. Тот же
+-клиент без изменений работает с локальной Ollama (без ключа и без отправки
+-кода наружу) — см. docs/hotspots.md. Ключ читается только из env и нигде не
+-сохраняется; в результаты и логи он не попадает.
++Поддерживаются два провайдера, выбор — переменными окружения:
++- OpenAI-совместимый (по умолчанию DeepSeek; локальная Ollama через base_url);
++- Anthropic Claude через официальный SDK.
++
++Ключ читается только из env и нигде не сохраняется; в результаты и логи он
++не попадает. Настройка и примеры — docs/llm.md.
+ """
+ from __future__ import annotations
+ 
+@@ -18,6 +20,7 @@ from .hotspots import Hotspot, SourcePreview
+ 
+ DEFAULT_BASE_URL = "https://api.deepseek.com"
+ DEFAULT_MODEL = "deepseek-chat"
++ANTHROPIC_DEFAULT_MODEL = "claude-opus-4-8"
+ REQUEST_TIMEOUT_S = 60
+ MAX_RESPONSE_CHARS = 8000
+ 
+@@ -45,7 +48,7 @@ class LLMError(RuntimeError):
+ 
+ 
+ def config() -> tuple[str, str, str]:
+-    """(base_url, model, api_key) из переменных окружения."""
++    """(base_url, model, api_key) для OpenAI-совместимого провайдера."""
+     base = (os.environ.get("LATENCYLAB_LLM_BASE_URL", "") or DEFAULT_BASE_URL).strip().rstrip("/")
+     model = (os.environ.get("LATENCYLAB_LLM_MODEL", "") or DEFAULT_MODEL).strip()
+     key = (os.environ.get("LATENCYLAB_LLM_API_KEY", "")
+@@ -53,8 +56,29 @@ def config() -> tuple[str, str, str]:
+     return base, model, key
+ 
+ 
++def _provider() -> str:
++    """'anthropic' или 'openai': явный LATENCYLAB_LLM_PROVIDER либо автоопределение."""
++    value = os.environ.get("LATENCYLAB_LLM_PROVIDER", "").strip().lower()
++    if value in ("anthropic", "openai"):
++        return value
++    return "anthropic" if os.environ.get("ANTHROPIC_API_KEY", "").strip() else "openai"
++
++
++def _anthropic_config() -> tuple[str, str]:
++    """(model, api_key) для Anthropic."""
++    model = (os.environ.get("LATENCYLAB_LLM_MODEL", "") or ANTHROPIC_DEFAULT_MODEL).strip()
++    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
++    return model, key
++
++
+ def config_issue() -> Optional[str]:
+-    """Подсказка, если LLM не настроен (нет ключа и не задан локальный base_url), иначе None."""
++    """Подсказка, если выбранный LLM не настроен, иначе None."""
++    if _provider() == "anthropic":
++        _, key = _anthropic_config()
++        if key:
++            return None
++        return ("Провайдер Claude выбран, но не задан ANTHROPIC_API_KEY. "
++                "Экспортируйте ключ или переключитесь (LATENCYLAB_LLM_PROVIDER=openai).")
+     base_url, _, key = config()
+     if key or base_url != DEFAULT_BASE_URL.rstrip("/"):
+         return None
+@@ -110,7 +134,7 @@ def build_prompt(
+ 
+ def request_diagnosis(messages: list[dict], base_url: str, model: str,
+                       key: str, timeout: float = REQUEST_TIMEOUT_S) -> str:
+-    """Один POST /chat/completions и текст ответа."""
++    """Один POST /chat/completions к OpenAI-совместимому API и текст ответа."""
+     payload = json.dumps({"model": model, "messages": messages,
+                           "temperature": 0.2, "stream": False}).encode("utf-8")
+     headers = {"Content-Type": "application/json"}
+@@ -141,16 +165,51 @@ def request_diagnosis(messages: list[dict], base_url: str, model: str,
+     return content
+ 
+ 
++def _request_anthropic(system: str, user_text: str, model: str, key: str) -> str:
++    """Один запрос к Anthropic Messages API через официальный SDK."""
++    try:
++        import anthropic
++    except ImportError as exc:
++        raise LLMError(
++            "Провайдер Claude требует пакет anthropic. Установите: pip install anthropic"
++        ) from exc
++    client = anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
++    try:
++        response = client.messages.create(
++            model=model,
++            max_tokens=2048,
++            system=system,
++            messages=[{"role": "user", "content": user_text}],
++        )
++    except anthropic.AuthenticationError as exc:
++        raise LLMError("Claude: неверный ANTHROPIC_API_KEY.") from exc
++    except anthropic.APIStatusError as exc:
++        raise LLMError(f"Claude ответил {exc.status_code}: {exc.message}") from exc
++    except anthropic.APIConnectionError as exc:
++        raise LLMError(f"Не удалось обратиться к Claude: {exc}") from exc
++    text = "".join(block.text for block in response.content if block.type == "text").strip()
++    if not text:
++        raise LLMError("Claude вернул пустой ответ.")
++    if len(text) > MAX_RESPONSE_CHARS:
++        text = text[:MAX_RESPONSE_CHARS] + "…"
++    return text
++
++
+ def diagnose(*, command: str, mode: str, cpu: Optional[int], kernel: Optional[str],
+              total_samples: int, hotspots: list[Hotspot],
+              previews: list[Optional[SourcePreview]],
+              analysis: Optional[Analysis]) -> str:
+-    """Полный цикл: конфиг из env, промпт и запрос."""
+-    base_url, model, key = config()
++    """Полный цикл: конфиг из env, промпт и запрос к выбранному провайдеру."""
+     issue = config_issue()
+     if issue is not None:
+         raise LLMError(issue)
+     messages = build_prompt(command=command, mode=mode, cpu=cpu, kernel=kernel,
+                             total_samples=total_samples, hotspots=hotspots,
+                             previews=previews, analysis=analysis)
++    if _provider() == "anthropic":
++        model, key = _anthropic_config()
++        system = next(m["content"] for m in messages if m["role"] == "system")
++        user_text = next(m["content"] for m in messages if m["role"] == "user")
++        return _request_anthropic(system, user_text, model, key)
++    base_url, model, key = config()
+     return request_diagnosis(messages, base_url, model, key)
