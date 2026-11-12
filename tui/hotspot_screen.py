@@ -13,7 +13,9 @@ from textual.containers import Container, Horizontal, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Static
 
+from .analysis import Analysis
 from .hotspots import source_preview
+from .llm import LLMError, config_issue, diagnose
 from .profiler import ProfileError, ProfileResult, profile
 
 
@@ -26,20 +28,24 @@ class HotspotScreen(ModalScreen):
     #hotspot-actions Button { min-width: 8; margin-right: 1; }
     #profile-cpu { width: 10; }
     #profile-cache { width: 18; }
-    #hotspot-note, #hotspot-status, #source-title, #profile-diagnostics { height: auto; }
-    #hotspot-note, #profile-diagnostics { color: $text-muted; }
+    #llm-diagnose { width: 16; }
+    #hotspot-note, #hotspot-status, #source-title, #profile-diagnostics, #llm-diagnosis { height: auto; }
+    #hotspot-note, #profile-diagnostics, #llm-diagnosis { color: $text-muted; }
     #hotspot-table { height: 7; }
     #source-code { height: auto; margin: 1 0; }
     """
 
     def __init__(self, command: str, cpu: int | None, results_dir: Path,
-                 timeout: float | None) -> None:
+                 timeout: float | None, analysis: Analysis | None = None,
+                 kernel: str | None = None) -> None:
         super().__init__()
         self.command, self.cpu = command, cpu
         self.results_dir, self.timeout = results_dir, timeout
+        self.analysis, self.kernel = analysis, kernel
         self.result: ProfileResult | None = None
         self._cancel = threading.Event()
         self._busy = False
+        self._llm_busy = False
 
     def compose(self) -> ComposeResult:
         with Container(id="hotspot-dialog"):
@@ -49,6 +55,7 @@ class HotspotScreen(ModalScreen):
             with Horizontal(id="hotspot-actions"):
                 yield Button("CPU", id="profile-cpu", variant="primary")
                 yield Button("Cache misses", id="profile-cache")
+                yield Button("ИИ-диагноз", id="llm-diagnose")
                 yield Button("Стоп", id="profile-stop", disabled=True)
                 yield Button("Закрыть", id="profile-close")
             with VerticalScroll():
@@ -57,6 +64,7 @@ class HotspotScreen(ModalScreen):
                 yield Static("Выберите CPU или Cache misses.", id="source-title", markup=False)
                 yield Static("", id="source-code", markup=False)
                 yield Static("", id="profile-diagnostics", markup=False)
+                yield Static("", id="llm-diagnosis", markup=False)
 
     def on_mount(self) -> None:
         self.query_one("#hotspot-table", DataTable).add_columns(
@@ -72,6 +80,7 @@ class HotspotScreen(ModalScreen):
         self.query_one("#source-title", Static).update("")
         self.query_one("#source-code", Static).update("")
         self.query_one("#profile-diagnostics", Static).update("")
+        self.query_one("#llm-diagnosis", Static).update("")
         self._cancel = threading.Event()
         self._set_busy(True)
         self.query_one("#hotspot-status", Static).update("Собираем профиль…")
@@ -82,6 +91,10 @@ class HotspotScreen(ModalScreen):
         for name in ("#profile-cpu", "#profile-cache"):
             self.query_one(name, Button).disabled = busy
         self.query_one("#profile-stop", Button).disabled = not busy
+        self._refresh_llm_button()
+
+    def _refresh_llm_button(self) -> None:
+        self.query_one("#llm-diagnose", Button).disabled = self._busy or self._llm_busy
 
     @work(exclusive=True, group="profile")
     async def _profile(self, mode: str) -> None:
@@ -137,6 +150,44 @@ class HotspotScreen(ModalScreen):
         else:
             view.update(Syntax(preview.code, "cpp", line_numbers=True, start_line=preview.start,
                                highlight_lines={preview.line}, word_wrap=True))
+
+    @on(Button.Pressed, "#llm-diagnose")
+    def _press_llm(self) -> None:
+        if self._busy or self._llm_busy:
+            return
+        if self.result is None or not self.result.hotspots:
+            self.query_one("#llm-diagnosis", Static).update(
+                "Сначала получите профиль (CPU или Cache misses).")
+            return
+        issue = config_issue()
+        if issue is not None:
+            self.query_one("#llm-diagnosis", Static).update(f"ИИ-диагноз недоступен: {issue}")
+            return
+        self._llm_busy = True
+        self._refresh_llm_button()
+        self.query_one("#llm-diagnosis", Static).update("Запрашиваем ИИ-диагноз…")
+        self._run_llm()
+
+    @work(exclusive=True, group="llm")
+    async def _run_llm(self) -> None:
+        try:
+            result = self.result
+            previews = [source_preview(item.location) for item in result.hotspots]
+            answer = await asyncio.to_thread(
+                diagnose, command=self.command, mode=result.mode, cpu=result.cpu,
+                kernel=self.kernel, total_samples=result.total_samples,
+                hotspots=result.hotspots, previews=previews, analysis=self.analysis)
+            if self.is_mounted:
+                self.query_one("#llm-diagnosis", Static).update(answer)
+        except LLMError as exc:
+            if self.is_mounted:
+                self.query_one("#llm-diagnosis", Static).update(f"ИИ-диагноз недоступен: {exc}")
+        except asyncio.CancelledError:
+            raise
+        finally:
+            self._llm_busy = False
+            if self.is_mounted:
+                self._refresh_llm_button()
 
     @on(Button.Pressed, "#profile-stop")
     def _stop(self) -> None:

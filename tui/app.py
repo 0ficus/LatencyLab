@@ -210,8 +210,11 @@ class LatencyLabApp(App):
         if cpu_text and (not cpu_text.isdigit() or len(cpu_text) > 4 or int(cpu_text) > 1023):
             self._set_status("CPU должен быть целым числом или пустым.", error=True)
             return
+        analysis = analyze(self.outcomes) if self.outcomes else None
+        kernel = self.outcomes[0].result.kernel if self.outcomes else None
         self.push_screen(HotspotScreen(command, int(cpu_text) if cpu_text else None,
-                                      self.results_dir, self.runner_timeout))
+                                      self.results_dir, self.runner_timeout,
+                                      analysis=analysis, kernel=kernel))
 
     @on(Button.Pressed, "#baseline")
     def _remember_baseline(self, event: Button.Pressed) -> None:
