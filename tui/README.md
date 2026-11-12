@@ -10,7 +10,7 @@ Textual TUI вызывает настоящий C++ runner через `subproces
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build -j 2
 python3 -m tui --demo --sample 5
 ```
@@ -60,6 +60,15 @@ python3 -m tui --timeout 30 --sample 3
 
 - `results/run-*.json` — исходный JSON каждого запуска;
 - `results/series-*.json` — команда, запрошенный sample, завершённые запуски, статистика и исходные результаты серии.
+
+Кнопка **«Участки кода»** открывает CPU/cache-miss профиль отдельного запуска:
+топ-5 мест, выбор строки и фрагмент исходника. Нужны Linux, perf и бинарник с `-g`.
+Профиль сохраняется в `results/profile-*/` и не входит в статистику `sample`.
+[Как подготовить и запустить](../docs/hotspots.md).
+
+Там же кнопка **«ИИ-диагноз»** отправляет горячий код и метрики серии внешнему
+LLM (DeepSeek по умолчанию или локальная Ollama; нужен ключ в env либо локальный
+`LATENCYLAB_LLM_BASE_URL`). [Настройка](../docs/hotspots.md#ии-диагноз-опционально).
 
 ## Контракт с runner
 

@@ -4,3 +4,5 @@ __pycache__/
 /.venv/
 /results/run-*.json
 /results/series-*.json
+.env
+.env.*
