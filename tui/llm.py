@@ -1,9 +1,11 @@
-"""Один HTTPS-запрос к OpenAI-совместимому LLM для объяснения горячего кода.
+"""ИИ-диагноз горячего кода через внешний LLM.
 
-Провайдер настраивается переменными окружения; по умолчанию DeepSeek. Тот же
-клиент без изменений работает с локальной Ollama (без ключа и без отправки
-кода наружу) — см. docs/hotspots.md. Ключ читается только из env и нигде не
-сохраняется; в результаты и логи он не попадает.
+Поддерживаются два провайдера, выбор — переменными окружения:
+- OpenAI-совместимый (по умолчанию DeepSeek; локальная Ollama через base_url);
+- Anthropic Claude через официальный SDK.
+
+Ключ читается только из env и нигде не сохраняется; в результаты и логи он
+не попадает. Настройка и примеры — docs/llm.md.
 """
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ from .hotspots import Hotspot, SourcePreview
 
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 DEFAULT_MODEL = "deepseek-chat"
+ANTHROPIC_DEFAULT_MODEL = "claude-opus-4-8"
 REQUEST_TIMEOUT_S = 60
 MAX_RESPONSE_CHARS = 8000
 
@@ -45,7 +48,7 @@ class LLMError(RuntimeError):
 
 
 def config() -> tuple[str, str, str]:
-    """(base_url, model, api_key) из переменных окружения."""
+    """(base_url, model, api_key) для OpenAI-совместимого провайдера."""
     base = (os.environ.get("LATENCYLAB_LLM_BASE_URL", "") or DEFAULT_BASE_URL).strip().rstrip("/")
     model = (os.environ.get("LATENCYLAB_LLM_MODEL", "") or DEFAULT_MODEL).strip()
     key = (os.environ.get("LATENCYLAB_LLM_API_KEY", "")
@@ -53,8 +56,29 @@ def config() -> tuple[str, str, str]:
     return base, model, key
 
 
+def _provider() -> str:
+    """'anthropic' или 'openai': явный LATENCYLAB_LLM_PROVIDER либо автоопределение."""
+    value = os.environ.get("LATENCYLAB_LLM_PROVIDER", "").strip().lower()
+    if value in ("anthropic", "openai"):
+        return value
+    return "anthropic" if os.environ.get("ANTHROPIC_API_KEY", "").strip() else "openai"
+
+
+def _anthropic_config() -> tuple[str, str]:
+    """(model, api_key) для Anthropic."""
+    model = (os.environ.get("LATENCYLAB_LLM_MODEL", "") or ANTHROPIC_DEFAULT_MODEL).strip()
+    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    return model, key
+
+
 def config_issue() -> Optional[str]:
-    """Подсказка, если LLM не настроен (нет ключа и не задан локальный base_url), иначе None."""
+    """Подсказка, если выбранный LLM не настроен, иначе None."""
+    if _provider() == "anthropic":
+        _, key = _anthropic_config()
+        if key:
+            return None
+        return ("Провайдер Claude выбран, но не задан ANTHROPIC_API_KEY. "
+                "Экспортируйте ключ или переключитесь (LATENCYLAB_LLM_PROVIDER=openai).")
     base_url, _, key = config()
     if key or base_url != DEFAULT_BASE_URL.rstrip("/"):
         return None
@@ -110,7 +134,7 @@ def build_prompt(
 
 def request_diagnosis(messages: list[dict], base_url: str, model: str,
                       key: str, timeout: float = REQUEST_TIMEOUT_S) -> str:
-    """Один POST /chat/completions и текст ответа."""
+    """Один POST /chat/completions к OpenAI-совместимому API и текст ответа."""
     payload = json.dumps({"model": model, "messages": messages,
                           "temperature": 0.2, "stream": False}).encode("utf-8")
     headers = {"Content-Type": "application/json"}
@@ -141,16 +165,51 @@ def request_diagnosis(messages: list[dict], base_url: str, model: str,
     return content
 
 
+def _request_anthropic(system: str, user_text: str, model: str, key: str) -> str:
+    """Один запрос к Anthropic Messages API через официальный SDK."""
+    try:
+        import anthropic
+    except ImportError as exc:
+        raise LLMError(
+            "Провайдер Claude требует пакет anthropic. Установите: pip install anthropic"
+        ) from exc
+    client = anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
+    try:
+        response = client.messages.create(
+            model=model,
+            max_tokens=2048,
+            system=system,
+            messages=[{"role": "user", "content": user_text}],
+        )
+    except anthropic.AuthenticationError as exc:
+        raise LLMError("Claude: неверный ANTHROPIC_API_KEY.") from exc
+    except anthropic.APIStatusError as exc:
+        raise LLMError(f"Claude ответил {exc.status_code}: {exc.message}") from exc
+    except anthropic.APIConnectionError as exc:
+        raise LLMError(f"Не удалось обратиться к Claude: {exc}") from exc
+    text = "".join(block.text for block in response.content if block.type == "text").strip()
+    if not text:
+        raise LLMError("Claude вернул пустой ответ.")
+    if len(text) > MAX_RESPONSE_CHARS:
+        text = text[:MAX_RESPONSE_CHARS] + "…"
+    return text
+
+
 def diagnose(*, command: str, mode: str, cpu: Optional[int], kernel: Optional[str],
              total_samples: int, hotspots: list[Hotspot],
              previews: list[Optional[SourcePreview]],
              analysis: Optional[Analysis]) -> str:
-    """Полный цикл: конфиг из env, промпт и запрос."""
-    base_url, model, key = config()
+    """Полный цикл: конфиг из env, промпт и запрос к выбранному провайдеру."""
     issue = config_issue()
     if issue is not None:
         raise LLMError(issue)
     messages = build_prompt(command=command, mode=mode, cpu=cpu, kernel=kernel,
                             total_samples=total_samples, hotspots=hotspots,
                             previews=previews, analysis=analysis)
+    if _provider() == "anthropic":
+        model, key = _anthropic_config()
+        system = next(m["content"] for m in messages if m["role"] == "system")
+        user_text = next(m["content"] for m in messages if m["role"] == "user")
+        return _request_anthropic(system, user_text, model, key)
+    base_url, model, key = config()
     return request_diagnosis(messages, base_url, model, key)

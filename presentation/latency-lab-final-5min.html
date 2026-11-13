@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Latency Lab — финальная защита (5 минут)</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --panel: #11161f;
+    --panel-2: #161d29;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --border: #232b38;
+    --green: #3fb950;
+    --cyan: #58a6ff;
+    --amber: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --teal: #39d4c0;
+    --mono: "SF Mono", "JetBrains Mono", "Fira Code", "Menlo", "Consolas", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(88,166,255,0.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 100%, rgba(63,185,80,0.06), transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .deck { position: relative; width: 100%; height: 100%; z-index: 1; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6vh 8vw;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity .45s ease, transform .45s ease;
+    pointer-events: none;
+  }
+
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+  /* --- типографика --- */
+  .kicker {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 2.2vh;
+  }
+  .kicker .slash { color: var(--muted); }
+
+  h1 {
+    font-size: clamp(2.2rem, 5.6vw, 4.4rem);
+    line-height: 1.04;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 3vh;
+  }
+  h1 .accent { color: var(--cyan); }
+
+  .lead {
+    font-size: clamp(1.1rem, 2.4vw, 1.55rem);
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 52ch;
+  }
+  .lead strong { color: var(--text); }
+  .lead .hl { color: var(--green); font-weight: 600; }
+
+  .foot {
+    margin-top: 3vh;
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: .85rem;
+    line-height: 1.7;
+    max-width: 1000px;
+  }
+  .foot .ok { color: var(--green); }
+  .foot code { color: var(--text); }
+
+  /* --- титульный слайд --- */
+  .title .logo {
+    font-family: var(--mono);
+    color: var(--cyan);
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    letter-spacing: .05em;
+    margin-bottom: 2.5vh;
+  }
+  .title .logo .cursor { color: var(--green); animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .title .sub {
+    font-size: clamp(1.1rem, 2.2vw, 1.45rem);
+    color: var(--muted);
+    max-width: 42ch;
+    line-height: 1.5;
+  }
+  .title .sub .hl { color: var(--green); }
+
+  .author { margin-top: 3vh; font-family: var(--mono); font-size: 1.05rem; color: var(--muted); letter-spacing: .02em; }
+  .author b { color: var(--text); font-weight: 600; }
+
+  .tagline-meta { margin-top: 4vh; display: flex; gap: 1.2rem; flex-wrap: wrap; }
+  .chip {
+    font-family: var(--mono);
+    font-size: .9rem;
+    padding: .45rem .9rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    background: var(--panel);
+  }
+  .chip b { color: var(--text); font-weight: 500; }
+
+  /* --- проблема: где vs почему --- */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2vw;
+    margin-top: 3vh;
+    max-width: 1100px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.4rem 2.2rem;
+  }
+  .card .label {
+    font-family: var(--mono);
+    font-size: .95rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+  .card .label.where { color: var(--amber); }
+  .card .label.why { color: var(--green); }
+  .card .big { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 800; line-height: 1.05; }
+  .card .big.dim { color: var(--muted); }
+  .card .note { margin-top: 1rem; color: var(--muted); font-size: 1rem; line-height: 1.5; }
+
+  /* --- конвейер --- */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    flex-wrap: wrap;
+    margin-top: 4vh;
+    max-width: 1100px;
+  }
+  .flow .step {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: .9rem 1.3rem;
+    font-family: var(--mono);
+    font-size: 1.02rem;
+  }
+  .flow .step b { color: var(--cyan); font-weight: 600; }
+  .flow .arrow { color: var(--muted); font-family: var(--mono); font-size: 1.2rem; }
+
+  /* --- тех. стек / модули --- */
+  .stack {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+    margin-top: 4vh;
+    max-width: 1200px;
+  }
+  .tech {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem 1.4rem;
+  }
+  .tech .name { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; color: var(--text); }
+  .tech .desc { margin-top: .6rem; color: var(--muted); font-size: .95rem; line-height: 1.45; }
+  .tech .name.c { color: var(--cyan); }
+  .tech .name.py { color: var(--amber); }
+  .tech .name.tui { color: var(--green); }
+  .tech .name.perf { color: var(--purple); }
+
+  /* --- методы диагностики --- */
+  .methods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    margin-top: 4vh;
+    max-width: 1200px;
+  }
+  .method {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem 1.4rem;
+    transition: transform .2s ease, border-color .2s ease;
+  }
+  .method:hover { transform: translateY(-3px); border-color: var(--green); }
+  .method .n { font-family: var(--mono); color: var(--muted); font-size: .78rem; letter-spacing: .12em; }
+  .method .name { font-family: var(--mono); font-size: 1.05rem; font-weight: 700; margin: .5rem 0 .5rem; }
+  .method .desc { color: var(--muted); font-size: .95rem; line-height: 1.45; }
+  .method .name.c { color: var(--cyan); }
+  .method .name.g { color: var(--green); }
+  .method .name.a { color: var(--amber); }
+  .method .name.p { color: var(--purple); }
+  .method .name.t { color: var(--teal); }
+
+  /* --- результаты: сравнение --- */
+  .compare { display: grid; gap: 1.8vh; margin-top: 4vh; max-width: 1150px; }
+  .cmp {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem 1.8rem;
+  }
+  .cmp .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.1rem; gap: 1rem; }
+  .cmp .name { font-family: var(--mono); color: var(--muted); letter-spacing: .03em; font-size: 1rem; }
+  .cmp .name b { color: var(--text); }
+  .cmp .ratio { font-family: var(--mono); color: var(--amber); font-weight: 700; font-size: 1.25rem; white-space: nowrap; }
+  .bar-row { display: grid; grid-template-columns: 130px 1fr 96px; gap: .8rem; align-items: center; margin-bottom: .55rem; }
+  .bar-row .lbl { font-family: var(--mono); font-size: .82rem; color: var(--muted); text-align: right; }
+  .bar-row .val { font-family: var(--mono); font-size: .82rem; color: var(--text); }
+  .bar-track { height: 14px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; }
+  .bar-fill.fast { background: var(--green); }
+  .bar-fill.slow { background: var(--red); }
+
+  /* --- ограничения --- */
+  .lims { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 4vh; max-width: 1100px; }
+  .lim {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 14px;
+    padding: 1.5rem 1.5rem;
+  }
+  .lim.red { border-left-color: var(--red); }
+  .lim .t { font-weight: 700; font-size: 1.08rem; margin-bottom: .5rem; }
+  .lim .d { color: var(--muted); line-height: 1.5; font-size: .98rem; }
+  .lim .d code { font-family: var(--mono); color: var(--text); }
+
+  /* --- дорожная карта --- */
+  .roadmap { display: flex; flex-direction: column; gap: 1rem; margin-top: 4vh; max-width: 1000px; }
+  .road {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.5rem;
+  }
+  .road .idx { font-family: var(--mono); color: var(--green); font-weight: 700; font-size: 1.15rem; min-width: 1.8rem; }
+  .road .txt { line-height: 1.5; color: var(--muted); }
+  .road .txt b { color: var(--text); }
+  .road .txt code { font-family: var(--mono); color: var(--text); }
+
+  .verified { margin-top: 3.5vh; display: flex; gap: .8rem; flex-wrap: wrap; max-width: 1000px; }
+  .verified .v {
+    font-family: var(--mono);
+    background: var(--panel);
+    border: 1px solid var(--green);
+    border-radius: 999px;
+    padding: .45rem 1rem;
+    color: var(--green);
+    font-size: .9rem;
+  }
+
+  /* --- финал --- */
+  .closing h1 { color: var(--text); }
+  .closing .thanks { color: var(--green); }
+  .contacts { margin-top: 3vh; font-family: var(--mono); color: var(--muted); font-size: 1rem; line-height: 1.9; }
+  .contacts b { color: var(--cyan); }
+
+  /* --- навигация --- */
+  .hud {
+    position: fixed;
+    bottom: 2.4vh;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 3vw;
+    z-index: 10;
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: .9rem;
+  }
+  .counter { letter-spacing: .08em; }
+  .counter b { color: var(--text); }
+  .dots { display: flex; gap: .5rem; }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background .2s ease, transform .2s ease;
+  }
+  .dot.active { background: var(--green); transform: scale(1.25); }
+  .hint { letter-spacing: .06em; }
+
+  @media (max-width: 800px) {
+    .split, .demo, .lims { grid-template-columns: 1fr; }
+    .methods { grid-template-columns: 1fr 1fr; }
+    .stack { grid-template-columns: 1fr 1fr; }
+    .bar-row { grid-template-columns: 100px 1fr 80px; }
+  }
+
+  body.print .slide { transition: none; }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1. Титул -->
+  <section class="slide title">
+    <div class="logo">$ latency-lab <span class="cursor">▊</span></div>
+    <h1>Latency <span class="accent">Lab</span></h1>
+    <p class="sub">Инструмент, который не просто показывает, <span class="hl">где</span> программа тормозит, а объясняет — <span class="hl">почему</span>.</p>
+    <p class="author"><b>Билый Александр Владимирович</b> · <b>Знатнов Егор Павлович</b> · <b>Степин Сергей Дмитриевич</b> · 1 курс MHS</p>
+    <div class="tagline-meta">
+      <span class="chip"><b>C++20/23</b> · ядро</span>
+      <span class="chip"><b>perf_event_open</b> · Linux</span>
+      <span class="chip"><b>Python</b> · анализ</span>
+      <span class="chip"><b>Textual TUI</b> · интерфейс</span>
+      <span class="chip"><b>Хакатон ИТМО</b> · ноябрь 2026</span>
+    </div>
+  </section>
+
+  <!-- 2. Проблема -->
+  <section class="slide">
+    <div class="kicker">Проблема <span class="slash">//</span> 01</div>
+    <h1>Профайлер отвечает на «<span class="accent">где</span>»,<br>но не на «<span class="accent">почему</span>»</h1>
+    <div class="split">
+      <div class="card">
+        <div class="label where">где</div>
+        <div class="big dim">функция<br>foo()</div>
+        <div class="note">Профайлер показывает: время уходит сюда. Но не говорит, из-за чего именно.</div>
+      </div>
+      <div class="card">
+        <div class="label why">почему</div>
+        <div class="big">cache misses<br>&nbsp;ветвления…</div>
+        <div class="note">Latency Lab находит настоящую причину задержки и объясняет её словами.</div>
+      </div>
+    </div>
+    <div class="flow">
+      <span class="step">время</span><span class="arrow">→</span>
+      <span class="step">показатели CPU</span><span class="arrow">→</span>
+      <span class="step">участки кода</span><span class="arrow">→</span>
+      <span class="step"><b>гипотезы</b></span>
+    </div>
+  </section>
+
+  <!-- 3. Идея -->
+  <section class="slide">
+    <div class="kicker">Идея <span class="slash">//</span> 02</div>
+    <h1>Запускаем эксперименты —<br>получаем <span class="accent">объяснение</span></h1>
+    <p class="lead">Инструмент гоняет программу через серию измерений и на выходе даёт не таблицу чисел, а <strong>понятный ответ</strong>: вот отсюда задержка — и вот почему. Каждая гипотеза привязана к следующему эксперименту, который её проверит.</p>
+    <div class="flow">
+      <span class="step"><b>1</b> запустить</span><span class="arrow">→</span>
+      <span class="step"><b>2</b> измерить</span><span class="arrow">→</span>
+      <span class="step"><b>3</b> объяснить</span>
+    </div>
+  </section>
+
+  <!-- 4. Устройство -->
+  <section class="slide">
+    <div class="kicker">Что сделали <span class="slash">//</span> 03</div>
+    <h1>Единый инструмент —<br><span class="accent">от запуска до диагноза</span></h1>
+    <div class="flow">
+      <span class="step">Python <b>TUI</b></span><span class="arrow">→</span>
+      <span class="step">C++ <b>runner</b></span><span class="arrow">→</span>
+      <span class="step"><b>программа</b></span>
+    </div>
+    <div class="stack">
+      <div class="tech"><div class="name tui">Textual TUI</div><div class="desc">Экран результата и панель «Диагноз»</div></div>
+      <div class="tech"><div class="name c">C++ runner</div><div class="desc">fork/exec, affinity на CPU, timeout</div></div>
+      <div class="tech"><div class="name perf">MetricsCollector</div><div class="desc">Счётчики через perf_event_open + ресурсы из wait4</div></div>
+      <div class="tech"><div class="name py">Анализ</div><div class="desc">Статистика, CPI, гипотезы, сравнение версий</div></div>
+    </div>
+    <p class="foot">Метрики: время, <code>cycles</code>, <code>instructions</code>, <code>cache misses</code>, <code>task_clock</code> · ресурсы: user/system CPU, page faults. Без изменения вашего кода.</p>
+  </section>
+
+  <!-- 5. Методы -->
+  <section class="slide">
+    <div class="kicker">Диагностика <span class="slash">//</span> 04</div>
+    <h1>Пять слоёв <span class="accent">объяснимого анализа</span></h1>
+    <div class="methods">
+      <div class="method"><div class="n">01</div><div class="name c">Статистика</div><div class="desc">Среднее, min/max, медиана, разброс и коэффициент вариации.</div></div>
+      <div class="method"><div class="n">02</div><div class="name g">Показатели CPU</div><div class="desc">CPI, доля промахов кеша, backend/frontend-простои.</div></div>
+      <div class="method"><div class="n">03</div><div class="name a">Сравнение A/B</div><div class="desc">Медианы базовой и новой версий, одинаковый объём работы.</div></div>
+      <div class="method"><div class="n">04</div><div class="name p">perf-профиль</div><div class="desc">Сэмплы CPU / cache-misses, топ-5 горячих строк с исходником.</div></div>
+      <div class="method"><div class="n">05</div><div class="name t">ИИ-диагноз</div><div class="desc">LLM читает горячий код и метрики — предлагает эксперименты.</div></div>
+    </div>
+    <p class="foot">Гипотезы требуют проверки экспериментом — мы не выдаём «вероятность причины», а показываем, <span class="ok">что проверить дальше</span>.</p>
+  </section>
+
+  <!-- 6. Результаты -->
+  <section class="slide">
+    <div class="kicker">Результаты <span class="slash">//</span> 05</div>
+    <h1>25 реальных запусков</h1>
+    <p class="lead">5 демо × 5 повторов на CPU 0 · Linux VM, aarch64. Одна и та же работа — разный порядок доступа к памяти.</p>
+    <div class="compare">
+      <div class="cmp">
+        <div class="head">
+          <span class="name"><b>Массив 32 МиБ</b> · 8 проходов</span>
+          <span class="ratio">4.1×</span>
+        </div>
+        <div class="bar-row">
+          <span class="lbl">подряд</span>
+          <div class="bar-track"><div class="bar-fill fast" style="width:24.4%"></div></div>
+          <span class="val">20.62 мс</span>
+        </div>
+        <div class="bar-row">
+          <span class="lbl">с шагом 64</span>
+          <div class="bar-track"><div class="bar-fill slow" style="width:100%"></div></div>
+          <span class="val">84.62 мс</span>
+        </div>
+      </div>
+      <div class="cmp">
+        <div class="head">
+          <span class="name"><b>Матрицы 256×256</b> · 3 умножения</span>
+          <span class="ratio">1.7×</span>
+        </div>
+        <div class="bar-row">
+          <span class="lbl">по строкам</span>
+          <div class="bar-track"><div class="bar-fill fast" style="width:58%"></div></div>
+          <span class="val">23.55 мс</span>
+        </div>
+        <div class="bar-row">
+          <span class="lbl">по столбцам</span>
+          <div class="bar-track"><div class="bar-fill slow" style="width:100%"></div></div>
+          <span class="val">40.62 мс</span>
+        </div>
+      </div>
+    </div>
+    <p class="foot"><span class="ok">Бинарный поиск</span> (1 М элементов, 200 k запросов): 39.20 мс · CPU-время ≈ <b>98%</b> от wall → разница — реальная работа CPU, а не I/O. У массива с шагом user-CPU растёт 15 → 77 мс при <b>одинаковых</b> page faults → указывает на паттерн доступа к памяти.</p>
+  </section>
+
+  <!-- 7. Ограничения -->
+  <section class="slide">
+    <div class="kicker">Честно об ограничениях <span class="slash">//</span> 06</div>
+    <h1>Главное ограничение — <span class="accent">perf</span></h1>
+    <div class="lims">
+      <div class="lim red">
+        <div class="t">Счётчики запрещены</div>
+        <div class="d">Linux отдаёт <code>perf_event_open: Operation not permitted</code> (paranoid=2).</div>
+      </div>
+      <div class="lim red">
+        <div class="t">Причина — гипотеза</div>
+        <div class="d">Аппаратные причины (cache misses) пока не доказаны числом — только косвенно.</div>
+      </div>
+      <div class="lim">
+        <div class="t">Что измерено реально</div>
+        <div class="d">Время, user/system CPU и page faults — честные, без подстановок.</div>
+      </div>
+      <div class="lim">
+        <div class="t">Сверка ещё впереди</div>
+        <div class="d">Сравнение с <code>perf stat</code> на свободной машине не выполнено.</div>
+      </div>
+    </div>
+    <p class="foot">Недоступная метрика показывается как «недоступна» с причиной — мы <span class="ok">не придумываем числа</span>.</p>
+  </section>
+
+  <!-- 8. Дальше -->
+  <section class="slide">
+    <div class="kicker">Дальше <span class="slash">//</span> 07</div>
+    <h1>Следующий шаг</h1>
+    <div class="roadmap">
+      <div class="road"><div class="idx">01</div><div class="txt"><b>Машина с разрешённым perf</b> — подтвердить счётчики и, наконец, «увидеть» cache misses.</div></div>
+      <div class="road"><div class="idx">02</div><div class="txt"><b>Сверка с perf stat</b> и профиль реального кода, а не демо.</div></div>
+      <div class="road"><div class="idx">03</div><div class="txt"><b>A/B-чередование</b> и контроль частоты CPU — убрать влияние фона и порядка запуска.</div></div>
+      <div class="road"><div class="idx">04</div><div class="txt"><b>Полный цикл «профиль → ИИ»</b> — подтвердить его артефактами на живом коде.</div></div>
+    </div>
+    <div class="verified">
+      <span class="v">4/4 CTest</span>
+      <span class="v">25 тестов анализа</span>
+      <span class="v">12 тестов ИИ-обвязки</span>
+      <span class="v">проверено 12.11</span>
+    </div>
+  </section>
+
+  <!-- 9. Финал -->
+  <section class="slide closing">
+    <div class="kicker">Спасибо <span class="slash">//</span> 08</div>
+    <h1><span class="thanks">Спасибо за внимание!</span><br>Готов ответить на вопросы.</h1>
+    <div class="contacts">
+      <div>Latency Lab · C++20/23 · perf_event_open · Python · Textual TUI</div>
+      <div>Команда: <b>Александр Билый</b> · <b>Сергей Степин</b> · <b>Егор Знатнов</b></div>
+      <div>Telegram: <b>@oficus</b></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <div class="counter"><b id="cur">01</b> / <span id="tot">09</span></div>
+  <div class="dots" id="dots"></div>
+  <div class="hint">← → листать · F — полный экран</div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsBox = document.getElementById('dots');
+  const cur = document.getElementById('cur');
+  const tot = document.getElementById('tot');
+  let current = 0;
+
+  tot.textContent = String(slides.length).padStart(2, '0');
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    dotsBox.appendChild(d);
+  });
+  const dots = Array.from(dotsBox.children);
+
+  function go(n) {
+    current = (n + slides.length) % slides.length;
+    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    cur.textContent = String(current + 1).padStart(2, '0');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') go(current + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(current - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+  });
+
+  let touchX = 0;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) go(current + (dx < 0 ? 1 : -1));
+  });
+
+  go(0);
+  if (location.hash) {
+    const n = parseInt(location.hash.slice(1), 10);
+    if (n >= 1 && n <= slides.length) go(n - 1);
+  }
+  if (location.search.indexOf('print') >= 0) {
+    document.body.classList.add('print');
+    const hud = document.querySelector('.hud');
+    if (hud) hud.style.display = 'none';
+  }
+</script>
+</body>
+</html>

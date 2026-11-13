@@ -13,6 +13,7 @@ from textual.containers import Container, Horizontal, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Static
 
+from ._compat import to_thread
 from .analysis import Analysis
 from .hotspots import source_preview
 from .llm import LLMError, config_issue, diagnose
@@ -99,8 +100,8 @@ class HotspotScreen(ModalScreen):
     @work(exclusive=True, group="profile")
     async def _profile(self, mode: str) -> None:
         try:
-            result = await asyncio.to_thread(profile, self.command, mode, self.cpu,
-                                             self.results_dir, self.timeout, self._cancel)
+            result = await to_thread(profile, self.command, mode, self.cpu,
+                                     self.results_dir, self.timeout, self._cancel)
             if not self.is_mounted:
                 return
             self.result = result
@@ -173,7 +174,7 @@ class HotspotScreen(ModalScreen):
         try:
             result = self.result
             previews = [source_preview(item.location) for item in result.hotspots]
-            answer = await asyncio.to_thread(
+            answer = await to_thread(
                 diagnose, command=self.command, mode=result.mode, cpu=result.cpu,
                 kernel=self.kernel, total_samples=result.total_samples,
                 hotspots=result.hotspots, previews=previews, analysis=self.analysis)

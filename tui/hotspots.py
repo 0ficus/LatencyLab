@@ -30,9 +30,11 @@ def parse_report(report: str) -> tuple[list[Hotspot], int]:
         if not row.strip() or row.lstrip().startswith("#"):
             continue
         fields = [field.strip() for field in row.split("\t")]
-        if len(fields) != 5 or not fields[1].isdigit():
-            raise ValueError("Неожиданный формат perf report (ожидались 5 полей через TAB).")
-        _, samples, symbol, location, dso = fields
+        # Некоторые сборки perf добавляют хвостовые колонки (IPC, [IPC Coverage]);
+        # нужны только первые пять: overhead, sample, symbol, srcline, dso.
+        if len(fields) < 5 or not fields[1].isdigit():
+            raise ValueError("Неожиданный формат perf report (ожидались ≥5 полей через TAB).")
+        _, samples, symbol, location, dso = fields[:5]
         symbol = re.sub(r"^\[[^]]+\]\s*", "", symbol)
         key = (symbol or "[unknown]", location or "??:0", dso or "[unknown]")
         counts[key] = counts.get(key, 0) + int(samples)
